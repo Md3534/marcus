@@ -1,0 +1,73 @@
+<form action="{% url 'product_add' %}" method="POST" class="space-y-6">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add">
+    <div class="space-y-2">
+        <label class="text-sm font-bold text-gray-700">Product Name</label>
+        <input type="text" name="name" required placeholder="e.g. Premium Coffee Beans" 
+               class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
+    </div>
+    
+    <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Category</label>
+            <div class="relative">
+                <select name="category" required class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all appearance-none cursor-pointer">
+                    <option value="">Select Category</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+                <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+            </div>
+        </div>
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Unit Price (₦)</label>
+            <input type="number" name="unit_price" step="0.01" min="0" required 
+                   class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all" placeholder="0.00">
+        </div>
+    </div>
+
+    <div class="space-y-2">
+        <label class="text-sm font-bold text-gray-700">Description</label>
+        <textarea name="description" rows="3" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all" placeholder="Enter product details..."></textarea>
+    </div>
+
+    <div class="space-y-4 pt-4 border-t border-gray-50">
+        <h4 class="text-sm font-black text-gray-400 uppercase tracking-widest">Stock Information</h4>
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Initial Stock</label>
+            <input type="number" name="stock" min="0" value="0" required 
+                   class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
+        </div>
+    </div>
+
+    <div class="space-y-4 pt-4 border-t border-gray-50">
+        <h4 class="text-sm font-black text-gray-400 uppercase tracking-widest">Shelf Life & Expiry</h4>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+                <label class="text-sm font-bold text-gray-700">Production/Arrival Date</label>
+                <input type="date" name="production_date" 
+                       class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
+            </div>
+            <div class="space-y-2">
+                <label class="text-sm font-bold text-gray-700">Days to Expire</label>
+                <input type="number" name="best_before_days" placeholder="e.g. 365" 
+                       class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
+            </div>
+        </div>
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Fixed Expiry Date (if known)</label>
+            <input type="date" name="expiry_date" 
+                   class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
+        </div>
+    </div>
+
+    <div class="pt-6 border-t border-gray-50">
+        <button type="submit" class="w-full py-4 bg-yellow-600 text-white font-bold rounded-2xl shadow-lg shadow-yellow-100 hover:bg-yellow-700 transition-all active:scale-[0.98]">
+            Create Product
+        </button>
+        <button @click="modalOpen = false" type="button" class="w-full mt-3 py-4 bg-gray-50 text-gray-500 font-bold rounded-2xl hover:bg-gray-100 transition-all">
+            Cancel
+        </button>
+    </div>
+</form>

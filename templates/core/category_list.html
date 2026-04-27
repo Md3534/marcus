@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}Categories - Inventory System{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex justify-between items-end">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-800">Product Categories</h1>
+        <p class="text-gray-500">Organize your inventory with logical groupings.</p>
+    </div>
+    <button @click="modalOpen = true; modalTitle = 'Add New Category'" class="bg-yellow-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-yellow-700 transition-all shadow-md active:scale-95">
+        <i class="fas fa-plus mr-2"></i>New Category
+    </button>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for category in categories %}
+    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg transition-all group">
+        <div class="flex items-center justify-between mb-6">
+            <div class="w-14 h-14 bg-yellow-50 text-yellow-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fas fa-tags text-2xl"></i>
+            </div>
+            <div class="text-right">
+                <span class="text-xs font-black text-gray-400 uppercase tracking-widest">Products</span>
+                <p class="text-2xl font-black text-gray-800">{{ category.product_count }}</p>
+            </div>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ category.name }}</h3>
+        <p class="text-gray-500 text-sm line-clamp-2 h-10 mb-6">{{ category.description|default:"No description provided."|truncatechars:80 }}</p>
+        
+        <div class="pt-6 border-t border-gray-50 flex justify-between items-center">
+            <a href="#" class="text-yellow-600 font-bold text-sm hover:underline">Manage Items</a>
+            <button class="p-2 text-gray-300 hover:text-gray-600 transition-colors">
+                <i class="fas fa-edit"></i>
+            </button>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-gray-100">
+        <i class="fas fa-folder-open text-gray-200 text-6xl mb-4"></i>
+        <h3 class="text-xl font-bold text-gray-800">No categories found</h3>
+        <p class="text-gray-500 mb-6">You haven't created any categories yet.</p>
+        <button class="bg-yellow-600 text-white px-6 py-2 rounded-xl font-bold">Create First Category</button>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block modal_content %}
+<form class="space-y-6">
+    <div class="space-y-2">
+        <label class="text-sm font-bold text-gray-700">Category Name</label>
+        <input type="text" placeholder="e.g. Beverages" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
+    </div>
+    
+    <div class="space-y-2">
+        <label class="text-sm font-bold text-gray-700">Description</label>
+        <textarea rows="4" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all" placeholder="Describe this category..."></textarea>
+    </div>
+
+    <div class="pt-6 border-t border-gray-50">
+        <button type="submit" class="w-full py-4 bg-yellow-600 text-white font-bold rounded-2xl shadow-lg shadow-yellow-100 hover:bg-yellow-700 transition-all active:scale-[0.98]">
+            Create Category
+        </button>
+        <button @click="modalOpen = false" type="button" class="w-full mt-3 py-4 bg-gray-50 text-gray-500 font-bold rounded-2xl hover:bg-gray-100 transition-all">
+            Cancel
+        </button>
+    </div>
+</form>
+{% endblock %}

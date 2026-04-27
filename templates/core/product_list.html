@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency_tags %}
 
 {% block title %}Inventory List - Inventory System{% endblock %}
 
@@ -12,7 +13,7 @@
         <button class="bg-gray-100 text-gray-700 px-4 py-2.5 rounded-xl font-semibold hover:bg-gray-200 transition-colors">
             <i class="fas fa-filter mr-2"></i>Filter
         </button>
-        <button class="bg-yellow-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-yellow-700 transition-all shadow-md active:scale-95">
+        <button @click="modalOpen = true; modalType = 'add'; modalTitle = 'Add New Product'" class="bg-yellow-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-yellow-700 transition-all shadow-md active:scale-95">
             <i class="fas fa-plus mr-2"></i>Add New Product
         </button>
     </div>
@@ -60,7 +61,7 @@
                         <div class="text-[10px] text-red-500 font-bold uppercase tracking-wider">Low Stock</div>
                         {% endif %}
                     </td>
-                    <td class="px-6 py-4 font-semibold text-gray-800">${{ product.unit_price }}</td>
+                    <td class="px-6 py-4 font-semibold text-gray-800">{{ product.unit_price|naira }}</td>
                     <td class="px-6 py-4">
                         {% if product.expiry_date %}
                             <div class="text-sm {% if product.is_expired %}text-red-500 font-bold{% else %}text-gray-600{% endif %}">
@@ -75,10 +76,10 @@
                     </td>
                     <td class="px-6 py-4 text-right">
                         <div class="flex justify-end gap-2">
-                            <a href="{% url 'product_detail' product.id %}" class="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+                            <a href="{% url 'product_detail' product.id %}" class="p-2 text-gray-400 hover:text-yellow-600 transition-colors">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <button class="p-2 text-gray-400 hover:text-orange-500 transition-colors">
+                            <button @click="modalOpen = true; modalType = 'edit'; modalTitle = 'Edit Product'; editingProduct = { id: '{{ product.id }}', name: '{{ product.name|escapejs }}', description: '{{ product.description|default:''|escapejs }}', category: '{{ product.category.id }}', unit_price: {{ product.unit_price }}, stock: {{ product.stock }}, production_date: '{{ product.production_date|date:'Y-m-d' }}', best_before_days: '{{ product.best_before_days|default:'' }}', expiry_date: '{{ product.expiry_date|date:'Y-m-d' }}' }" class="p-2 text-gray-400 hover:text-orange-500 transition-colors">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="p-2 text-gray-400 hover:text-red-600 transition-colors">
@@ -94,7 +95,7 @@
                             <i class="fas fa-box-open text-gray-200 text-6xl mb-4"></i>
                             <h3 class="text-xl font-bold text-gray-800 mb-2">No products found</h3>
                             <p class="text-gray-500 text-sm mb-6">Start by adding your first product to the inventory.</p>
-                            <button class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-blue-200">Add Product</button>
+                            <button @click="modalOpen = true; modalTitle = 'Add New Product'" class="bg-yellow-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-yellow-200">Add Product</button>
                         </div>
                     </td>
                 </tr>
@@ -103,4 +104,47 @@
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block modal_content %}
+<!-- Add Product Form -->
+<form class="space-y-6">
+    <div class="space-y-2">
+        <label class="text-sm font-bold text-gray-700">Product Name</label>
+        <input type="text" placeholder="e.g. Premium Coffee Beans" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
+    </div>
+    
+    <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Category</label>
+            <select class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all appearance-none cursor-pointer">
+                <option value="">Select Category</option>
+                <!-- Dynamically populated categories could go here -->
+            </select>
+        </div>
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Unit Price (₦)</label>
+            <input type="number" step="0.01" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all" placeholder="0.00">
+        </div>
+    </div>
+
+    <div class="space-y-2">
+        <label class="text-sm font-bold text-gray-700">Description</label>
+        <textarea rows="3" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all" placeholder="Enter product details..."></textarea>
+    </div>
+
+    <div class="space-y-2">
+        <label class="text-sm font-bold text-gray-700">Initial Stock</label>
+        <input type="number" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all" placeholder="0">
+    </div>
+
+    <div class="pt-6 border-t border-gray-50">
+        <button type="submit" class="w-full py-4 bg-yellow-600 text-white font-bold rounded-2xl shadow-lg shadow-yellow-100 hover:bg-yellow-700 transition-all active:scale-[0.98]">
+            Create Product
+        </button>
+        <button @click="modalOpen = false" type="button" class="w-full mt-3 py-4 bg-gray-50 text-gray-500 font-bold rounded-2xl hover:bg-gray-100 transition-all">
+            Cancel
+        </button>
+    </div>
+</form>
 {% endblock %}

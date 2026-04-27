@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - Inventory System{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800">System Settings</h1>
+    <p class="text-gray-500">Configure your inventory preferences and user profile.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Sidebar for settings -->
+    <div class="space-y-2">
+        <button class="w-full flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border-2 border-yellow-600 text-yellow-700 font-bold">
+            <i class="fas fa-user-circle"></i> Profile Information
+        </button>
+        <button class="w-full flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-transparent hover:bg-gray-100 text-gray-700 font-medium transition-all">
+            <i class="fas fa-bell"></i> Notifications Config
+        </button>
+        <button class="w-full flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-transparent hover:bg-gray-100 text-gray-700 font-medium transition-all">
+            <i class="fas fa-shield-alt"></i> Security & Password
+        </button>
+        <button class="w-full flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-transparent hover:bg-gray-100 text-gray-700 font-medium transition-all">
+            <i class="fas fa-database"></i> Data Management
+        </button>
+    </div>
+
+    <!-- Main Settings Panel -->
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 border-b border-gray-50 pb-4">Profile Information</h2>
+            <form class="space-y-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-gray-600">First Name</label>
+                        <input type="text" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-gray-600">Last Name</label>
+                        <input type="text" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-gray-600">Email Address</label>
+                    <input type="email" value="{{ user.email }}" disabled class="w-full bg-gray-100 border border-gray-100 p-3 rounded-xl text-gray-400 cursor-not-allowed">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-gray-600">Bio</label>
+                    <textarea class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all" rows="4" placeholder="Tell us about yourself..."></textarea>
+                </div>
+                <div class="flex justify-end pt-4">
+                    <button type="submit" class="bg-yellow-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-yellow-100 hover:bg-yellow-700 transition-all">Save Changes</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 outline outline-2 outline-emerald-50 text-emerald-800">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-emerald-100 rounded-2xl">
+                    <i class="fas fa-check-circle text-xl text-emerald-600"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold">Email Verified</h3>
+                    <p class="text-sm opacity-80">Your email is verified and secured.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

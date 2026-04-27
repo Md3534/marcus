@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency_tags %}
 
 {% block title %}Dashboard - Inventory System{% endblock %}
 
@@ -48,7 +49,7 @@
             </div>
         </div>
         <h3 class="text-gray-500 text-sm font-medium">Total Value</h3>
-        <p class="text-2xl font-bold text-gray-800">${{ total_value|floatformat:2 }}</p>
+        <p class="text-2xl font-bold text-gray-800">{{ total_value|naira }}</p>
     </div>
 </div>
 
@@ -83,7 +84,7 @@
                         </td>
                         <td class="px-6 py-4 text-gray-500">{{ product.category.name }}</td>
                         <td class="px-6 py-4 font-medium">{{ product.stock }}</td>
-                        <td class="px-6 py-4">${{ product.unit_price }}</td>
+                        <td class="px-6 py-4">{{ product.unit_price|naira }}</td>
                         <td class="px-6 py-4 text-right">
                             {% if product.stock > product.inventory.low_stock_threshold %}
                             <span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">In Stock</span>
@@ -113,10 +114,10 @@
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
             <div class="grid grid-cols-2 gap-4">
-                <a href="#" class="flex flex-col items-center p-4 rounded-xl border border-gray-100 hover:bg-yellow-50 hover:border-yellow-100 transition-all group">
+                <button @click="modalOpen = true; modalType = 'add'; modalTitle = 'Add New Product'" class="flex flex-col items-center p-4 rounded-xl border border-gray-100 hover:bg-yellow-50 hover:border-yellow-100 transition-all group">
                     <i class="fas fa-plus text-yellow-600 mb-2 group-hover:scale-110 transition-transform"></i>
                     <span class="text-xs font-medium text-gray-600">Add Item</span>
-                </a>
+                </button>
                 <a href="#" class="flex flex-col items-center p-4 rounded-xl border border-gray-100 hover:bg-purple-50 hover:border-purple-100 transition-all group">
                     <i class="fas fa-file-export text-purple-600 mb-2 group-hover:scale-110 transition-transform"></i>
                     <span class="text-xs font-medium text-gray-600">Export</span>
