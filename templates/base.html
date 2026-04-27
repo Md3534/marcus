@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Inventory System{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0 bg-white border-r border-gray-200">
+        <div class="h-full px-3 py-4 overflow-y-auto">
+            <div class="flex items-center mb-10 px-2">
+                <span class="text-2xl font-bold text-yellow-600">Marcus Store</span>
+            </div>
+            <ul class="space-y-2 font-medium">
+                <li>
+                    <a href="{% url 'dashboard' %}" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group transition-all duration-200">
+                        <i class="fas fa-home w-5 h-5 text-gray-500 group-hover:text-yellow-600"></i>
+                        <span class="ms-3">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'product_list' %}" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group transition-all duration-200">
+                        <i class="fas fa-box w-5 h-5 text-gray-500 group-hover:text-yellow-600"></i>
+                        <span class="ms-3 text-gray-700">Inventory</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group transition-all duration-200">
+                        <i class="fas fa-tags w-5 h-5 text-gray-500 group-hover:text-yellow-600"></i>
+                        <span class="ms-3">Categories</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group transition-all duration-200">
+                        <i class="fas fa-bell w-5 h-5 text-gray-500 group-hover:text-yellow-600"></i>
+                        <span class="ms-3">Notifications</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200">
+                <li>
+                    <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group transition-all duration-200">
+                        <i class="fas fa-user w-5 h-5 text-gray-500 group-hover:text-yellow-600"></i>
+                        <span class="ms-3">Account</span>
+                    </a>
+                </li>
+                <li>
+                    <form action="{% url 'account_logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="flex items-center w-full p-2 text-gray-900 rounded-lg hover:bg-red-50 group transition-all duration-200">
+                            <i class="fas fa-sign-out-alt w-5 h-5 text-gray-500 group-hover:text-red-600"></i>
+                            <span class="ms-3 group-hover:text-red-600">Logout</span>
+                        </button>
+                    </form>
+                </li>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="p-4 sm:ml-64">
+        <!-- Top Nav -->
+        <nav class="bg-white border-b border-gray-200 px-4 py-2.5 mb-6 rounded-xl shadow-sm flex justify-between items-center">
+            <div class="flex items-center">
+                <button data-drawer-target="sidebar" data-drawer-toggle="sidebar" aria-controls="sidebar" type="button" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                    <span class="sr-only">Open sidebar</span>
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="hidden sm:block ml-2">
+                    <span class="text-gray-500">Welcome, </span>
+                    <span class="font-semibold text-gray-800">{{ user.email }}</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" placeholder="Search inventory..." class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition-all">
+                </div>
+                <div class="flex items-center gap-2">
+                    <img src="https://ui-avatars.com/api/?name={{ user.email }}&background=D4AF37&color=fff" class="w-8 h-8 rounded-full border-2 border-white shadow-sm" alt="User">
+                </div>
+            </div>
+        </nav>
+
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="p-4 mb-4 text-sm rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <main class="animate-fadeIn">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+    </style>
+</body>
+</html>
