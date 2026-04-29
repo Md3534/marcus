@@ -1,6 +1,5 @@
 from .base import *
-
-DEBUG = True
+from utils.env import PRODUCTION_DB
 
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")

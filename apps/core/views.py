@@ -125,5 +125,16 @@ def category_list(request):
     return render(request, 'core/category_list.html', {'categories': categories})
 
 @login_required
+def category_add(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        if name:
+            Category.objects.create(name=name, description=description)
+            messages.success(request, f"Category '{name}' created successfully!")
+        return redirect('category_list')
+    return redirect('category_list')
+
+@login_required
 def settings_page(request):
     return render(request, 'core/settings.html')

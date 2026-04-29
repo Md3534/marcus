@@ -11,6 +11,7 @@ WORKDIR /app
 # libpq5 is enough for the database driver at runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
+    netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

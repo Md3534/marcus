@@ -9,7 +9,7 @@
         <h1 class="text-3xl font-bold text-gray-800">Product Categories</h1>
         <p class="text-gray-500">Organize your inventory with logical groupings.</p>
     </div>
-    <button @click="modalOpen = true; modalTitle = 'Add New Category'" class="bg-yellow-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-yellow-700 transition-all shadow-md active:scale-95">
+    <button @click="modalOpen = true; modalType = 'custom'; modalTitle = 'Add New Category'" class="bg-yellow-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-yellow-700 transition-all shadow-md active:scale-95">
         <i class="fas fa-plus mr-2"></i>New Category
     </button>
 </div>
@@ -41,22 +41,23 @@
         <i class="fas fa-folder-open text-gray-200 text-6xl mb-4"></i>
         <h3 class="text-xl font-bold text-gray-800">No categories found</h3>
         <p class="text-gray-500 mb-6">You haven't created any categories yet.</p>
-        <button class="bg-yellow-600 text-white px-6 py-2 rounded-xl font-bold">Create First Category</button>
+        <button @click="modalOpen = true; modalType = 'custom'; modalTitle = 'Add New Category'" class="bg-yellow-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-yellow-200">Create First Category</button>
     </div>
     {% endfor %}
 </div>
 {% endblock %}
 
 {% block modal_content %}
-<form class="space-y-6">
+<form action="{% url 'category_add' %}" method="POST" class="space-y-6">
+    {% csrf_token %}
     <div class="space-y-2">
         <label class="text-sm font-bold text-gray-700">Category Name</label>
-        <input type="text" placeholder="e.g. Beverages" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
+        <input type="text" name="name" required placeholder="e.g. Beverages" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
     </div>
     
     <div class="space-y-2">
         <label class="text-sm font-bold text-gray-700">Description</label>
-        <textarea rows="4" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all" placeholder="Describe this category..."></textarea>
+        <textarea name="description" rows="4" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all" placeholder="Describe this category..."></textarea>
     </div>
 
     <div class="pt-6 border-t border-gray-50">

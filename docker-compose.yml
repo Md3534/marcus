@@ -19,11 +19,17 @@ services:
           memory: 128M
 
   backend:
-    build: ./backend
+    build: .
     container_name: mstore-backend
     volumes:
-      - ./backend:/app
+      - .:/app
     env_file: .env
+    environment:
+      - DB_HOST=db
+      - DB_NAME=mstore_db
+      - DB_USER=devuser
+      - DB_PASSWORD=dev_password
+      - DB_PORT=5432
     ports:
       - "8000:8000"
     depends_on:
@@ -33,7 +39,7 @@ services:
       resources:
         limits:
           memory: 512M
-    command: python manage.py runserver 0.0.0.0:8000
+    command: bash entrypoint.sh
 
 volumes:
   postgres_data:
