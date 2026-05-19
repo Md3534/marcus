@@ -13,7 +13,7 @@
         <button class="bg-gray-100 text-gray-700 px-4 py-2.5 rounded-xl font-semibold hover:bg-gray-200 transition-colors">
             <i class="fas fa-filter mr-2"></i>Filter
         </button>
-        <button @click="modalOpen = true; modalType = 'add'; modalTitle = 'Add New Product'" class="bg-yellow-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-yellow-700 transition-all shadow-md active:scale-95">
+        <button @click="newProduct = { production_date: '', best_before_days: '', expiry_date: '' }; modalOpen = true; modalType = 'add'; modalTitle = 'Add New Product'" class="bg-yellow-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-yellow-700 transition-all shadow-md active:scale-95">
             <i class="fas fa-plus mr-2"></i>Add New Product
         </button>
     </div>
@@ -95,7 +95,7 @@
                             <i class="fas fa-box-open text-gray-200 text-6xl mb-4"></i>
                             <h3 class="text-xl font-bold text-gray-800 mb-2">No products found</h3>
                             <p class="text-gray-500 text-sm mb-6">Start by adding your first product to the inventory.</p>
-                            <button @click="modalOpen = true; modalType = 'add'; modalTitle = 'Add New Product'" class="bg-yellow-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-yellow-200">Add Product</button>
+                            <button @click="newProduct = { production_date: '', best_before_days: '', expiry_date: '' }; modalOpen = true; modalType = 'add'; modalTitle = 'Add New Product'" class="bg-yellow-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-yellow-200">Add Product</button>
                         </div>
                     </td>
                 </tr>

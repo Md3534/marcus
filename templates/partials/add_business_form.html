@@ -1,0 +1,39 @@
+<form action="{% url 'business_create' %}" method="post" class="flex flex-col h-full">
+    {% csrf_token %}
+    
+    <div class="space-y-6 flex-1">
+        <div>
+            <label for="name" class="block text-sm font-medium text-gray-900 mb-1">Business Name</label>
+            <div class="relative">
+                <i class="fas fa-building absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" name="name" id="name" required
+                    class="block w-full rounded-xl border-gray-200 pl-10 focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm py-2.5 transition-colors border"
+                    placeholder="e.g. Acme Corporation">
+            </div>
+        </div>
+
+        <div>
+            <label for="subdomain" class="block text-sm font-medium text-gray-900 mb-1">Subdomain</label>
+            <div class="flex rounded-xl shadow-sm border border-gray-200 overflow-hidden focus-within:border-yellow-500 focus-within:ring-1 focus-within:ring-yellow-500 transition-all">
+                <input type="text" name="subdomain" id="subdomain" required
+                    class="block w-full border-0 focus:ring-0 sm:text-sm py-2.5 px-3"
+                    placeholder="acme">
+                <span class="inline-flex items-center px-3 border-l border-gray-200 bg-gray-50 text-gray-500 sm:text-sm">
+                    .myapp.com
+                </span>
+            </div>
+            <p class="mt-1 text-xs text-gray-500">This will be the unique URL for this tenant's store.</p>
+        </div>
+    </div>
+
+    <div class="pt-6 border-t border-gray-100 mt-8 flex justify-end gap-3 pb-8">
+        <button type="button" @click="modalOpen = false"
+            class="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
+            Cancel
+        </button>
+        <button type="submit"
+            class="inline-flex justify-center rounded-xl bg-yellow-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600 transition-colors">
+            Register Business
+        </button>
+    </div>
+</form>

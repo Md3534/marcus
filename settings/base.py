@@ -14,7 +14,7 @@ import sys
 
 load_dotenv()
 
-
+config
 # Application definition
 
 # sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
@@ -74,7 +74,7 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-ROOT_URLCONF = "config.urls"
+ROOT_URLCONF = "src.urls"
 
 STORAGES = {
     # Media: Goes to Cloudinary
@@ -105,13 +105,14 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.csrf",
             ],
         },
     },
 ]
 
 
-WSGI_APPLICATION = "config.wsgi.application"
+WSGI_APPLICATION = "src.wsgi.application"
 
 
 # Password validation

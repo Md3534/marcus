@@ -18,17 +18,20 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <!-- NProgress for SPA Loading Bar -->
-    <link rel="stylesheet" href="https://unpkg.com/nprogress@0.2.0/nprogress.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/nprogress@0.2.0/nprogress.css"
+    />
     <script src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script>
     <script>
       // Configure NProgress to match the theme (yellow-600)
       NProgress.configure({ showSpinner: false });
-      
+
       // Wire up HTMX events to NProgress
-      document.addEventListener('htmx:beforeRequest', function() {
+      document.addEventListener("htmx:beforeRequest", function () {
         NProgress.start();
       });
-      document.addEventListener('htmx:afterRequest', function() {
+      document.addEventListener("htmx:afterRequest", function () {
         NProgress.done();
       });
     </script>
@@ -39,7 +42,9 @@
         height: 3px !important;
       }
       #nprogress .peg {
-        box-shadow: 0 0 10px #d4af37, 0 0 5px #d4af37 !important;
+        box-shadow:
+          0 0 10px #d4af37,
+          0 0 5px #d4af37 !important;
       }
       @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
       body {
@@ -55,11 +60,98 @@
       }
     </style>
     {% block extra_css %}{% endblock %}
+    <script>
+      document.addEventListener('alpine:init', () => {
+        Alpine.data('appData', () => ({
+          sidebarOpen: false,
+          modalOpen: false,
+          modalTitle: '',
+          modalType: '',
+          editingProduct: { id: '', name: '', description: '', category: '', unit_price: 0, stock: 0, production_date: '', best_before_days: '', expiry_date: '' },
+          newProduct: { production_date: '', best_before_days: '', expiry_date: '' },
+
+          notifications: [],
+
+          addNotification(message, type = 'success') {
+              const id = Date.now() + Math.random();
+              this.notifications.push({ id, message, type });
+              setTimeout(() => {
+                  this.removeNotification(id);
+              }, 5000);
+          },
+
+          removeNotification(id) {
+              this.notifications = this.notifications.filter(n => n.id !== id);
+          },
+
+          init() {
+              {% if messages %}
+                  {% for message in messages %}
+                      setTimeout(() => {
+                          this.addNotification("{{ message|escapejs }}", "{% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}success{% endif %}");
+                      }, {{ forloop.counter0 }} * 150);
+                  {% endfor %}
+              {% endif %}
+
+              // Sync new product dates
+              this.$watch('newProduct.best_before_days', (val, old) => {
+                  if (val && val !== old) this.calcExpiry('newProduct');
+              });
+              this.$watch('newProduct.expiry_date', (val, old) => {
+                  if (val && val !== old) this.calcDays('newProduct');
+              });
+
+              // Sync editing product dates
+              this.$watch('editingProduct.best_before_days', (val, old) => {
+                  if (val && val !== old) this.calcExpiry('editingProduct');
+              });
+              this.$watch('editingProduct.expiry_date', (val, old) => {
+                  if (val && val !== old) this.calcDays('editingProduct');
+              });
+          },
+
+          calcExpiry(target) {
+              let p = this[target].production_date;
+              let d = this[target].best_before_days;
+              if (d) {
+                  if (!p) {
+                      p = new Date().toISOString().split('T')[0];
+                      this[target].production_date = p;
+                  }
+                  let date = new Date(p);
+                  date.setDate(date.getDate() + parseInt(d));
+                  let newExpiry = date.toISOString().split('T')[0];
+                  if (this[target].expiry_date !== newExpiry) {
+                      this[target].expiry_date = newExpiry;
+                  }
+              }
+          },
+
+          calcDays(target) {
+              let p = this[target].production_date;
+              let e = this[target].expiry_date;
+              if (e) {
+                  if (!p) {
+                      p = new Date().toISOString().split('T')[0];
+                      this[target].production_date = p;
+                  }
+                  let pDate = new Date(p);
+                  let eDate = new Date(e);
+                  let diff = Math.floor((eDate - pDate) / (1000 * 60 * 60 * 24));
+                  let newDays = diff > 0 ? diff : 0;
+                  if (parseInt(this[target].best_before_days) !== newDays) {
+                      this[target].best_before_days = newDays;
+                  }
+              }
+          }
+        }));
+      });
+    </script>
   </head>
   <body
     hx-boost="true"
     class="bg-gray-50 text-gray-900 min-h-screen"
-    x-data="{ sidebarOpen: false, modalOpen: false, modalTitle: '', modalType: '', editingProduct: { id: '', name: '', description: '', category: '', unit_price: 0, stock: 0, production_date: '', best_before_days: '', expiry_date: '' } }"
+    x-data="appData()"
   >
     <!-- Sidebar -->
     <aside
@@ -110,6 +202,7 @@
               <span class="ms-3">Categories</span>
             </a>
           </li>
+
           <li>
             <a
               href="#"
@@ -193,18 +286,57 @@
         </div>
       </nav>
 
-      {% if messages %}
-      <div class="mb-6">
-        {% for message in messages %}
-        <div
-          class="p-4 mb-4 text-sm rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-emerald-50 text-emerald-800{% endif %}"
-          role="alert"
-        >
-          {{ message }}
-        </div>
-        {% endfor %}
+      <!-- Toast Notifications -->
+      <div
+        class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"
+      >
+        <template x-for="notification in notifications" :key="notification.id">
+          <div
+            x-show="true"
+            x-transition:enter="transition ease-out duration-300 transform"
+            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:translate-x-4"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:translate-x-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            :class="{
+                      'bg-emerald-50 text-emerald-800 border-emerald-200': notification.type === 'success',
+                      'bg-red-50 text-red-800 border-red-200': notification.type === 'error',
+                      'bg-yellow-50 text-yellow-800 border-yellow-200': notification.type === 'warning',
+                      'bg-blue-50 text-blue-800 border-blue-200': notification.type === 'info'
+                   }"
+            class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-xl border p-4 shadow-lg flex items-start justify-between gap-3 backdrop-blur-sm bg-opacity-95"
+          >
+            <div class="flex items-start gap-3 flex-1">
+              <i
+                class="fas mt-0.5 text-lg"
+                :class="{
+                          'fa-check-circle text-emerald-500': notification.type === 'success',
+                          'fa-exclamation-circle text-red-500': notification.type === 'error',
+                          'fa-exclamation-triangle text-yellow-500': notification.type === 'warning',
+                          'fa-info-circle text-blue-500': notification.type === 'info'
+                      }"
+              ></i>
+              <div class="flex flex-col">
+                <span
+                  class="font-bold text-sm"
+                  x-text="notification.type.charAt(0).toUpperCase() + notification.type.slice(1)"
+                ></span>
+                <span
+                  x-text="notification.message"
+                  class="text-sm mt-0.5 opacity-90"
+                ></span>
+              </div>
+            </div>
+            <button
+              @click="removeNotification(notification.id)"
+              class="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </template>
       </div>
-      {% endif %}
 
       <main class="animate-fadeIn">{% block content %}{% endblock %}</main>
     </div>
@@ -272,6 +404,9 @@
               </div>
               <div x-show="modalType === 'edit'">
                 {% include 'partials/edit_product_form.html' %}
+              </div>
+              <div x-show="modalType === 'add_business'">
+                {% include 'partials/add_business_form.html' %}
               </div>
               <div x-show="modalType === 'custom'">
                 {% block modal_content %}{% endblock %}

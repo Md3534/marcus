@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import models
 from django.db.models import Sum, Count, F, Q
 from apps.products.models.products_models import Product, StockBatch, Category, ProductInventory
+from .models import Business
 from django.utils import timezone
 from django.contrib import messages
 
@@ -138,3 +139,20 @@ def category_add(request):
 @login_required
 def settings_page(request):
     return render(request, 'core/settings.html')
+
+@login_required
+def business_list(request):
+    # Only for platform admins, but let's keep it simple for now
+    businesses = Business.objects.all().order_by('-created_at')
+    return render(request, 'core/business_list.html', {'businesses': businesses})
+
+@login_required
+def business_create(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        subdomain = request.POST.get('subdomain')
+        if name and subdomain:
+            Business.objects.create(name=name, subdomain=subdomain)
+            messages.success(request, f"Business '{name}' created successfully!")
+        return redirect('business_list')
+    return redirect('business_list')

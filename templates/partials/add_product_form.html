@@ -46,18 +46,18 @@
         <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
                 <label class="text-sm font-bold text-gray-700">Production/Arrival Date</label>
-                <input type="date" name="production_date" 
+                <input type="date" name="production_date" x-model="newProduct.production_date"
                        class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
             </div>
             <div class="space-y-2">
                 <label class="text-sm font-bold text-gray-700">Days to Expire</label>
-                <input type="number" name="best_before_days" placeholder="e.g. 365" 
+                <input type="number" name="best_before_days" x-model="newProduct.best_before_days" placeholder="e.g. 365" 
                        class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
             </div>
         </div>
         <div class="space-y-2">
             <label class="text-sm font-bold text-gray-700">Fixed Expiry Date (if known)</label>
-            <input type="date" name="expiry_date" 
+            <input type="date" name="expiry_date" x-model="newProduct.expiry_date"
                    class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
         </div>
     </div>

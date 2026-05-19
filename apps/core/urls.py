@@ -10,4 +10,6 @@ urlpatterns = [
     path('settings/', views.settings_page, name='settings_page'),
     path('products/add/', views.product_add, name='product_add'),
     path('products/<uuid:pk>/edit/', views.product_edit, name='product_edit'),
+    path('businesses/', views.business_list, name='business_list'),
+    path('businesses/add/', views.business_create, name='business_create'),
 ]

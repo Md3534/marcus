@@ -1,5 +1,5 @@
 from .base import *
-from utils.env import PRODUCTION_DB
+from src.config import PRODUCTION_DB
 
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
@@ -27,7 +27,13 @@ else:
         }
     }
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "*"]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:3000",
+]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
