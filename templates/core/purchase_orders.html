@@ -1,0 +1,103 @@
+{% extends "base.html" %} {% block title %}Purchase Orders - Marcus Store{%
+endblock %} {% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Purchase Orders</h1>
+    <button
+      class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+    >
+      <i class="fas fa-plus mr-2"></i> Create PO
+    </button>
+  </div>
+
+  {% if overdue_count > 0 %}
+  <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+    <div class="flex items-start gap-3">
+      <i class="fas fa-exclamation-circle text-red-600 mt-0.5"></i>
+      <div>
+        <div class="font-semibold text-red-900">Overdue POs</div>
+        <p class="text-sm text-red-700 mt-1">
+          {{ overdue_count }} purchase order(s) are overdue for delivery
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Filters -->
+  <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+    <form method="GET" class="flex gap-4">
+      <select
+        name="status"
+        class="px-3 py-2 border border-gray-300 rounded-lg"
+        onchange="this.form.submit()"
+      >
+        <option value="all" {% if status_filter="" ="all" %}selected{% endif %}>
+          All Orders
+        </option>
+        {% for value, label in statuses.items %}
+        <option
+          value="{{ value }}"
+          {%
+          if
+          status_filter=""
+          ="value"
+          %}selected{%
+          endif
+          %}
+        >
+          {{ label }}
+        </option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  <div class="bg-white rounded-lg border border-gray-200 p-6">
+    {% if purchase_orders %}
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b">
+          <tr>
+            <th class="px-4 py-2 text-left text-sm font-semibold">PO Number</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Supplier</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Status</th>
+            <th class="px-4 py-2 text-right text-sm font-semibold">
+              Total Amount
+            </th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">
+              Expected Delivery
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          {% for po in purchase_orders %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2 font-semibold">{{ po.po_number }}</td>
+            <td class="px-4 py-2">{{ po.supplier.name }}</td>
+            <td class="px-4 py-2">
+              <span
+                class="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold"
+                >{{ po.get_status_display }}</span
+              >
+            </td>
+            <td class="px-4 py-2 text-right font-semibold">
+              ${{ po.total_amount }}
+            </td>
+            <td class="px-4 py-2 text-sm">
+              {{ po.expected_delivery|date:"M d, Y" }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-8 text-gray-500">
+      <i class="fas fa-inbox text-4xl mb-4 opacity-50"></i>
+      <p>No purchase orders found.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

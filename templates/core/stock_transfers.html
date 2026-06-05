@@ -1,0 +1,58 @@
+{% extends "base.html" %} {% block title %}Stock Transfers - Marcus Store{%
+endblock %} {% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Stock Transfers</h1>
+    <button
+      class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+    >
+      <i class="fas fa-plus mr-2"></i> New Transfer
+    </button>
+  </div>
+
+  <div class="bg-white rounded-lg border border-gray-200 p-6">
+    {% if transfers %}
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b">
+          <tr>
+            <th class="px-4 py-2 text-left text-sm font-semibold">
+              Transfer #
+            </th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">From</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">To</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Status</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Date</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          {% for transfer in transfers %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2 font-semibold">
+              {{ transfer.transfer_number }}
+            </td>
+            <td class="px-4 py-2">{{ transfer.from_location }}</td>
+            <td class="px-4 py-2">{{ transfer.to_location }}</td>
+            <td class="px-4 py-2">
+              <span
+                class="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold"
+                >{{ transfer.get_status_display }}</span
+              >
+            </td>
+            <td class="px-4 py-2 text-sm text-gray-600">
+              {{ transfer.initiated_date|date:"M d, Y" }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-8 text-gray-500">
+      <i class="fas fa-inbox text-4xl mb-4 opacity-50"></i>
+      <p>No stock transfers yet.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+[project]
+name = "marcus-store"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "cloudinary>=1.44.2",
+    "dj-database-url>=3.1.2",
+    "django>=6.0.6",
+    "django-allauth>=65.18.0",
+    "django-cloudinary-storage>=0.3.0",
+    "dotenv>=0.9.9",
+    "pillow>=12.2.0",
+    "python-decouple>=3.8",
+    "whitenoise>=6.12.0",
+]

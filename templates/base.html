@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Inventory System{% endblock %}</title>
+    <title>{% block title %}M_D Chippa | Inventory{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js for interactions -->
     <script
@@ -160,7 +160,7 @@
     >
       <div class="h-full px-3 py-4 overflow-y-auto">
         <div class="flex items-center mb-10 px-2 justify-between">
-          <span class="text-2xl font-bold text-yellow-600">Marcus Store</span>
+          <span class="text-2xl font-bold text-yellow-600">M_D Chippa</span>
           <button
             @click="sidebarOpen = false"
             class="sm:hidden text-gray-400 hover:text-gray-600"
@@ -188,7 +188,7 @@
               <i
                 class="fas fa-box w-5 h-5 {% if request.resolver_match.url_name == 'product_list' %}text-yellow-600{% else %}text-gray-500 group-hover:text-yellow-600{% endif %}"
               ></i>
-              <span class="ms-3">Inventory</span>
+              <span class="ms-3">Products</span>
             </a>
           </li>
           <li>
@@ -205,13 +205,103 @@
 
           <li>
             <a
-              href="#"
-              class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group transition-all duration-200"
+              href="{% url 'notifications' %}"
+              class="flex items-center p-2 {% if request.resolver_match.url_name == 'notifications' %}bg-yellow-50 text-yellow-700{% else %}text-gray-900 hover:bg-gray-100{% endif %} rounded-lg group transition-all duration-200"
             >
               <i
-                class="fas fa-bell w-5 h-5 text-gray-500 group-hover:text-yellow-600"
+                class="fas fa-bell w-5 h-5 {% if request.resolver_match.url_name == 'notifications' %}text-yellow-600{% else %}text-gray-500 group-hover:text-yellow-600{% endif %}"
               ></i>
               <span class="ms-3">Notifications</span>
+            </a>
+          </li>
+
+          <!-- Operations Section -->
+          <li class="pt-4 border-t border-gray-200 mt-4">
+            <span
+              class="px-2 py-2 text-xs font-semibold text-gray-500 uppercase"
+              >Operations</span
+            >
+          </li>
+          <li>
+            <a
+              href="{% url 'purchase_orders' %}"
+              class="flex items-center p-2 {% if request.resolver_match.url_name == 'purchase_orders' %}bg-yellow-50 text-yellow-700{% else %}text-gray-900 hover:bg-gray-100{% endif %} rounded-lg group transition-all duration-200"
+            >
+              <i
+                class="fas fa-receipt w-5 h-5 {% if request.resolver_match.url_name == 'purchase_orders' %}text-yellow-600{% else %}text-gray-500 group-hover:text-yellow-600{% endif %}"
+              ></i>
+              <span class="ms-3">Purchase Orders</span>
+            </a>
+          </li>
+          <li>
+            <a
+              href="{% url 'batch_management' %}"
+              class="flex items-center p-2 {% if request.resolver_match.url_name == 'batch_management' %}bg-yellow-50 text-yellow-700{% else %}text-gray-900 hover:bg-gray-100{% endif %} rounded-lg group transition-all duration-200"
+            >
+              <i
+                class="fas fa-cubes w-5 h-5 {% if request.resolver_match.url_name == 'batch_management' %}text-yellow-600{% else %}text-gray-500 group-hover:text-yellow-600{% endif %}"
+              ></i>
+              <span class="ms-3">Batch Management</span>
+            </a>
+          </li>
+          <li>
+            <a
+              href="{% url 'stock_transfers' %}"
+              class="flex items-center p-2 {% if request.resolver_match.url_name == 'stock_transfers' %}bg-yellow-50 text-yellow-700{% else %}text-gray-900 hover:bg-gray-100{% endif %} rounded-lg group transition-all duration-200"
+            >
+              <i
+                class="fas fa-exchange-alt w-5 h-5 {% if request.resolver_match.url_name == 'stock_transfers' %}text-yellow-600{% else %}text-gray-500 group-hover:text-yellow-600{% endif %}"
+              ></i>
+              <span class="ms-3">Stock Transfers</span>
+            </a>
+          </li>
+
+          <!-- Analytics Section -->
+          <li class="pt-4 border-t border-gray-200 mt-4">
+            <span
+              class="px-2 py-2 text-xs font-semibold text-gray-500 uppercase"
+              >Reports & Analytics</span
+            >
+          </li>
+          <li>
+            <a
+              href="{% url 'expiry_report' %}"
+              class="flex items-center p-2 {% if request.resolver_match.url_name == 'expiry_report' %}bg-yellow-50 text-yellow-700{% else %}text-gray-900 hover:bg-gray-100{% endif %} rounded-lg group transition-all duration-200"
+            >
+              <i
+                class="fas fa-calendar-times w-5 h-5 {% if request.resolver_match.url_name == 'expiry_report' %}text-yellow-600{% else %}text-gray-500 group-hover:text-yellow-600{% endif %}"
+              ></i>
+              <span class="ms-3">Expiry Report</span>
+            </a>
+          </li>
+          <li>
+            <a
+              href="{% url 'low_stock_report' %}"
+              class="flex items-center p-2 {% if request.resolver_match.url_name == 'low_stock_report' %}bg-yellow-50 text-yellow-700{% else %}text-gray-900 hover:bg-gray-100{% endif %} rounded-lg group transition-all duration-200"
+            >
+              <i
+                class="fas fa-exclamation-triangle w-5 h-5 {% if request.resolver_match.url_name == 'low_stock_report' %}text-yellow-600{% else %}text-gray-500 group-hover:text-yellow-600{% endif %}"
+              ></i>
+              <span class="ms-3">Low Stock Report</span>
+            </a>
+          </li>
+
+          <!-- Suppliers Section -->
+          <li class="pt-4 border-t border-gray-200 mt-4">
+            <span
+              class="px-2 py-2 text-xs font-semibold text-gray-500 uppercase"
+              >Partners</span
+            >
+          </li>
+          <li>
+            <a
+              href="{% url 'suppliers' %}"
+              class="flex items-center p-2 {% if request.resolver_match.url_name == 'suppliers' %}bg-yellow-50 text-yellow-700{% else %}text-gray-900 hover:bg-gray-100{% endif %} rounded-lg group transition-all duration-200"
+            >
+              <i
+                class="fas fa-truck w-5 h-5 {% if request.resolver_match.url_name == 'suppliers' %}text-yellow-600{% else %}text-gray-500 group-hover:text-yellow-600{% endif %}"
+              ></i>
+              <span class="ms-3">Suppliers</span>
             </a>
           </li>
         </ul>

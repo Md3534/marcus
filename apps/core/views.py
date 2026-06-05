@@ -12,7 +12,7 @@ def dashboard(request):
     total_products = Product.objects.count()
     # Corrected low stock logic: handle products with inventory and filter by threshold
     low_stock_count = Product.objects.filter(
-        Q(stock__lte=F('inventory__low_stock_threshold')) | Q(stock=0)
+        Q(stock__lte=F('inventory__low_stock_threshold')) | Q(stock=0)  
     ).count()
     
     # Calculate total inventory value
@@ -156,3 +156,8 @@ def business_create(request):
             messages.success(request, f"Business '{name}' created successfully!")
         return redirect('business_list')
     return redirect('business_list')
+
+@login_required
+def notifications_page(request):
+    """Display notifications - currently a placeholder"""
+    return render(request, 'core/notifications.html')

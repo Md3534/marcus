@@ -1,129 +1,172 @@
-{% extends 'base.html' %}
-{% load currency_tags %}
-
-{% block title %}Dashboard - Inventory System{% endblock %}
-
-{% block content %}
+{% extends 'base.html' %} {% load currency_tags %} {% block title %}Dashboard -
+M_D Chippa{% endblock title %} {% block content %}
 <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-800">Inventory Dashboard</h1>
-    <p class="text-gray-500">Real-time overview of your warehouse operations.</p>
+  <h1 class="text-3xl font-bold text-gray-800">Inventory Dashboard</h1>
+  <p class="text-gray-500">Real-time overview of your warehouse operations.</p>
 </div>
 
 <!-- Stats Grid -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-            <div class="p-3 bg-yellow-50 text-yellow-600 rounded-xl">
-                <i class="fas fa-box text-xl"></i>
-            </div>
-            <span class="text-sm font-medium text-emerald-500 bg-emerald-50 px-2.5 py-0.5 rounded-full">+12%</span>
-        </div>
-        <h3 class="text-gray-500 text-sm font-medium">Total Products</h3>
-        <p class="text-2xl font-bold text-gray-800">{{ total_products }}</p>
+  <div
+    class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <div class="p-3 bg-yellow-50 text-yellow-600 rounded-xl">
+        <i class="fas fa-box text-xl"></i>
+      </div>
+      <span
+        class="text-sm font-medium text-emerald-500 bg-emerald-50 px-2.5 py-0.5 rounded-full"
+        >+12%</span
+      >
     </div>
+    <h3 class="text-gray-500 text-sm font-medium">Total Products</h3>
+    <p class="text-2xl font-bold text-gray-800">{{ total_products }}</p>
+  </div>
+  <div
+    class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <div class="p-3 bg-red-50 text-red-600 rounded-xl">
+        <i class="fas fa-exclamation-triangle text-xl"></i>
+      </div>
+    </div>
+    <h3 class="text-gray-500 text-sm font-medium">Low Stock Items</h3>
+    <p class="text-2xl font-bold text-gray-800">{{ low_stock_count }}</p>
+  </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-            <div class="p-3 bg-red-50 text-red-600 rounded-xl">
-                <i class="fas fa-exclamation-triangle text-xl"></i>
-            </div>
-        </div>
-        <h3 class="text-gray-500 text-sm font-medium">Low Stock Items</h3>
-        <p class="text-2xl font-bold text-gray-800">{{ low_stock_count }}</p>
+  <div
+    class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <div class="p-3 bg-orange-50 text-orange-600 rounded-xl">
+        <i class="fas fa-clock text-xl"></i>
+      </div>
     </div>
+    <h3 class="text-gray-500 text-sm font-medium">Expiring Soon</h3>
+    <p class="text-2xl font-bold text-gray-800">{{ expiring_soon }}</p>
+  </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-            <div class="p-3 bg-orange-50 text-orange-600 rounded-xl">
-                <i class="fas fa-clock text-xl"></i>
-            </div>
-        </div>
-        <h3 class="text-gray-500 text-sm font-medium">Expiring Soon</h3>
-        <p class="text-2xl font-bold text-gray-800">{{ expiring_soon }}</p>
+  <div
+    class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+        <i class="fas fa-dollar-sign text-xl"></i>
+      </div>
     </div>
-
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-                <i class="fas fa-dollar-sign text-xl"></i>
-            </div>
-        </div>
-        <h3 class="text-gray-500 text-sm font-medium">Total Value</h3>
-        <p class="text-2xl font-bold text-gray-800">{{ total_value|naira }}</p>
-    </div>
+    <h3 class="text-gray-500 text-sm font-medium">Total Value</h3>
+    <p class="text-2xl font-bold text-gray-800">{{ total_value|naira }}</p>
+  </div>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- Recent Items -->
-    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="p-6 border-b border-gray-50 flex justify-between items-center">
-            <h2 class="text-lg font-bold text-gray-800">Recent Arrivals</h2>
-            <a href="{% url 'product_list' %}" class="text-yellow-600 text-sm font-medium hover:underline">View all</a>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="bg-gray-50 text-gray-500 text-xs uppercase font-semibold">
-                    <tr>
-                        <th class="px-6 py-4">Product</th>
-                        <th class="px-6 py-4">Category</th>
-                        <th class="px-6 py-4">Stock</th>
-                        <th class="px-6 py-4">Price</th>
-                        <th class="px-6 py-4 text-right">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50">
-                    {% for product in recent_products %}
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 rounded-lg bg-gray-100 mr-3 flex items-center justify-center text-gray-400">
-                                    <i class="fas fa-image"></i>
-                                </div>
-                                <span class="font-medium text-gray-800">{{ product.name }}</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-gray-500">{{ product.category.name }}</td>
-                        <td class="px-6 py-4 font-medium">{{ product.stock }}</td>
-                        <td class="px-6 py-4">{{ product.unit_price|naira }}</td>
-                        <td class="px-6 py-4 text-right">
-                            {% if product.stock > product.inventory.low_stock_threshold %}
-                            <span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">In Stock</span>
-                            {% else %}
-                            <span class="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">Low Stock</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="px-6 py-10 text-center text-gray-400 italic">No products found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+  <!-- Recent Items -->
+  <div
+    class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+  >
+    <div class="p-6 border-b border-gray-50 flex justify-between items-center">
+      <h2 class="text-lg font-bold text-gray-800">Recent Arrivals</h2>
+      <a
+        href="{% url 'product_list' %}"
+        class="text-yellow-600 text-sm font-medium hover:underline"
+        >View all</a
+      >
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="bg-gray-50 text-gray-500 text-xs uppercase font-semibold">
+          <tr>
+            <th class="px-6 py-4">Product</th>
+            <th class="px-6 py-4">Category</th>
+            <th class="px-6 py-4">Stock</th>
+            <th class="px-6 py-4">Price</th>
+            <th class="px-6 py-4 text-right">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for product in recent_products %}
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center">
+                <div
+                  class="w-10 h-10 rounded-lg bg-gray-100 mr-3 flex items-center justify-center text-gray-400"
+                >
+                  <i class="fas fa-image"></i>
+                </div>
+                <span class="font-medium text-gray-800"
+                  >{{ product.name }}</span
+                >
+              </div>
+            </td>
+            <td class="px-6 py-4 text-gray-500">{{ product.category.name }}</td>
+            <td class="px-6 py-4 font-medium">{{ product.stock }}</td>
+            <td class="px-6 py-4">{{ product.unit_price|naira }}</td>
+            <td class="px-6 py-4 text-right">
+              {% if product.stock > product.inventory.low_stock_threshold %}
+              <span
+                class="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full"
+                >In Stock</span
+              >
+              {% else %}
+              <span
+                class="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full"
+                >Low Stock</span
+              >
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-6 py-10 text-center text-gray-400 italic">
+              No products found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="space-y-6">
+    <div
+      class="bg-gradient-to-br from-yellow-600 to-yellow-700 p-6 rounded-2xl shadow-lg text-white"
+    >
+      <h3 class="text-xl font-bold mb-2">Inventory Insight</h3>
+      <p class="text-yellow-100 text-sm mb-6">
+        You have {{ low_stock_count }} items running low. Consider restocking
+        soon.
+      </p>
+      <button
+        class="w-full py-3 bg-white text-yellow-600 font-bold rounded-xl hover:bg-yellow-50 transition-colors"
+      >
+        Generate Report
+      </button>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="space-y-6">
-        <div class="bg-gradient-to-br from-yellow-600 to-yellow-700 p-6 rounded-2xl shadow-lg text-white">
-            <h3 class="text-xl font-bold mb-2">Inventory Insight</h3>
-            <p class="text-yellow-100 text-sm mb-6">You have {{ low_stock_count }} items running low. Consider restocking soon.</p>
-            <button class="w-full py-3 bg-white text-yellow-600 font-bold rounded-xl hover:bg-yellow-50 transition-colors">Generate Report</button>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <button @click="modalOpen = true; modalType = 'add'; modalTitle = 'Add New Product'" class="flex flex-col items-center p-4 rounded-xl border border-gray-100 hover:bg-yellow-50 hover:border-yellow-100 transition-all group">
-                    <i class="fas fa-plus text-yellow-600 mb-2 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-xs font-medium text-gray-600">Add Item</span>
-                </button>
-                <a href="#" class="flex flex-col items-center p-4 rounded-xl border border-gray-100 hover:bg-purple-50 hover:border-purple-100 transition-all group">
-                    <i class="fas fa-file-export text-purple-600 mb-2 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-xs font-medium text-gray-600">Export</span>
-                </a>
-            </div>
-        </div>
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <h3 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <button
+          @click="modalOpen = true; modalType = 'add'; modalTitle = 'Add New Product'"
+          class="flex flex-col items-center p-4 rounded-xl border border-gray-100 hover:bg-yellow-50 hover:border-yellow-100 transition-all group"
+        >
+          <i
+            class="fas fa-plus text-yellow-600 mb-2 group-hover:scale-110 transition-transform"
+          ></i>
+          <span class="text-xs font-medium text-gray-600">Add Item</span>
+        </button>
+        <a
+          href="#"
+          class="flex flex-col items-center p-4 rounded-xl border border-gray-100 hover:bg-purple-50 hover:border-purple-100 transition-all group"
+        >
+          <i
+            class="fas fa-file-export text-purple-600 mb-2 group-hover:scale-110 transition-transform"
+          ></i>
+          <span class="text-xs font-medium text-gray-600">Export</span>
+        </a>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}

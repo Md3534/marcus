@@ -1,0 +1,242 @@
+{% extends "base.html" %} {% block title %}Batch Management - Marcus Store{%
+endblock %} {% block extra_css %}
+<style>
+  .batch-card {
+    transition: all 0.3s ease;
+  }
+  .batch-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  .expiry-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+  }
+  .expiry-critical {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+  .expiry-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+  .expiry-ok {
+    background-color: #dcfce7;
+    color: #166534;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Batch Management</h1>
+    <p class="text-gray-600 mt-1">
+      View and manage all product batches with FEFO (First Expired First Out)
+    </p>
+  </div>
+
+  <!-- Status Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+      <div class="text-sm text-gray-600">Total Batches</div>
+      <div class="text-2xl font-bold text-yellow-600 mt-1">
+        {{ total_batches }}
+      </div>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+      <div class="text-sm text-gray-600">Active</div>
+      <div class="text-2xl font-bold text-green-600 mt-1">
+        {{ batches|length }}
+      </div>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+      <div class="text-sm text-gray-600">Expiring Soon (30 days)</div>
+      <div class="text-2xl font-bold text-yellow-600 mt-1">
+        {{ expiring_count }}
+      </div>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+      <div class="text-sm text-gray-600">Expired</div>
+      <div class="text-2xl font-bold text-red-600 mt-1">
+        {{ expired_count }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+    <form method="GET" class="flex flex-col md:flex-row gap-4">
+      <!-- Status Filter -->
+      <select
+        name="status"
+        class="px-3 py-2 border border-gray-300 rounded-lg"
+        onchange="this.form.submit()"
+      >
+        <option
+          value="active"
+          {%
+          if
+          filter_status=""
+          ="active"
+          %}selected{%
+          endif
+          %}
+        >
+          Active Batches
+        </option>
+        <option
+          value="expiring_soon"
+          {%
+          if
+          filter_status=""
+          ="expiring_soon"
+          %}selected{%
+          endif
+          %}
+        >
+          Expiring Soon
+        </option>
+        <option
+          value="expired"
+          {%
+          if
+          filter_status=""
+          ="expired"
+          %}selected{%
+          endif
+          %}
+        >
+          Expired
+        </option>
+      </select>
+
+      <!-- Search -->
+      <input
+        type="text"
+        name="search"
+        placeholder="Search by product or batch number..."
+        value="{{ search_query }}"
+        class="px-3 py-2 border border-gray-300 rounded-lg flex-1"
+      />
+      <button
+        type="submit"
+        class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+      >
+        Search
+      </button>
+    </form>
+  </div>
+
+  <!-- Batches Table -->
+  <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b">
+          <tr>
+            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+              Product
+            </th>
+            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+              Batch #
+            </th>
+            <th
+              class="px-6 py-3 text-right text-sm font-semibold text-gray-900"
+            >
+              Quantity
+            </th>
+            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+              Expiry Date
+            </th>
+            <th
+              class="px-6 py-3 text-center text-sm font-semibold text-gray-900"
+            >
+              Status
+            </th>
+            <th
+              class="px-6 py-3 text-center text-sm font-semibold text-gray-900"
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          {% for batch in batches %}
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-6 py-4">
+              <div class="font-medium text-gray-900">
+                {{ batch.product.name }}
+              </div>
+              <div class="text-sm text-gray-500">
+                ${{ batch.product.unit_price }}
+              </div>
+            </td>
+            <td class="px-6 py-4 font-mono text-sm">
+              {{ batch.batch_number }}
+            </td>
+            <td class="px-6 py-4 text-right font-semibold">
+              {{ batch.quantity }} units
+            </td>
+            <td class="px-6 py-4">
+              <div class="font-medium">
+                {% if batch.expiry_date %} {{ batch.expiry_date|date:"M d, Y" }}
+                {% else %}
+                <span class="text-gray-500">N/A</span>
+                {% endif %}
+              </div>
+            </td>
+            <td class="px-6 py-4 text-center">
+              {% if batch.is_expired %}
+              <span class="expiry-badge expiry-critical">Expired</span>
+              {% else %} {% with days_until_expiry=batch.expiry_date|add:"-0" %}
+              {% if batch.expiry_date %} {% if days_until_expiry <= 7 %}
+              <span class="expiry-badge expiry-critical">Critical</span>
+              {% elif days_until_expiry <= 30 %}
+              <span class="expiry-badge expiry-warning">Warning</span>
+              {% else %}
+              <span class="expiry-badge expiry-ok">OK</span>
+              {% endif %} {% endif %} {% endwith %} {% endif %}
+            </td>
+            <td class="px-6 py-4 text-center">
+              <a
+                href="{% url 'batch_detail' batch.id %}"
+                class="text-yellow-600 hover:text-yellow-700 font-medium"
+              >
+                View
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+              No batches found matching your filters
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+    <div class="text-sm font-semibold text-gray-900 mb-3">
+      Expiry Status Legend:
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="flex items-center gap-2">
+        <span class="expiry-badge expiry-critical">Critical</span>
+        <span class="text-sm text-gray-600">7 days or less</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="expiry-badge expiry-warning">Warning</span>
+        <span class="text-sm text-gray-600">8-30 days</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="expiry-badge expiry-ok">OK</span>
+        <span class="text-sm text-gray-600">31+ days</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

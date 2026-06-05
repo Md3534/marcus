@@ -1,0 +1,117 @@
+{% extends "base.html" %} {% block title %}Expiry Report - Marcus Store{%
+endblock %} {% block content %}
+<div class="max-w-7xl mx-auto">
+  <h1 class="text-3xl font-bold text-gray-900 mb-6">Expiry Report</h1>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div class="text-sm text-red-600 font-semibold">Expired Products</div>
+      <div class="text-3xl font-bold text-red-600 mt-1">
+        {{ expired|length }}
+      </div>
+      <div class="text-xs text-red-600 mt-1">
+        Potential Loss: ${{ expired_value|floatformat:2 }}
+      </div>
+    </div>
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      <div class="text-sm text-yellow-600 font-semibold">
+        Expiring in 7 Days
+      </div>
+      <div class="text-3xl font-bold text-yellow-600 mt-1">
+        {{ expiring_7_days|length }}
+      </div>
+      <div class="text-xs text-yellow-600 mt-1">
+        At Risk: ${{ expiring_7_value|floatformat:2 }}
+      </div>
+    </div>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div class="text-sm text-blue-600 font-semibold">Expiring in 30 Days</div>
+      <div class="text-3xl font-bold text-blue-600 mt-1">
+        {{ expiring_30_days|length }}
+      </div>
+      <div class="text-xs text-blue-600 mt-1">
+        Total at Risk: ${{ total_at_risk|floatformat:2 }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Expired Products -->
+  {% if expired %}
+  <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+    <h2 class="text-xl font-bold text-red-600 mb-4">Expired Products</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Product</th>
+            <th class="px-4 py-2 text-right text-sm font-semibold">Stock</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">
+              Expiry Date
+            </th>
+            <th class="px-4 py-2 text-right text-sm font-semibold">Value</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          {% for product in expired %}
+          <tr>
+            <td class="px-4 py-2">
+              <a
+                href="{% url 'product_detail' product.id %}"
+                class="text-yellow-600 hover:underline"
+                >{{ product.name }}</a
+              >
+            </td>
+            <td class="px-4 py-2 text-right">{{ product.stock }} units</td>
+            <td class="px-4 py-2">{{ product.expiry_date|date:"M d, Y" }}</td>
+            <td class="px-4 py-2 text-right font-semibold">
+              ${{ product.total_value|floatformat:2 }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Expiring Soon -->
+  {% if expiring_7_days %}
+  <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+    <h2 class="text-xl font-bold text-yellow-600 mb-4">Expiring in 7 Days</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Product</th>
+            <th class="px-4 py-2 text-right text-sm font-semibold">Stock</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">
+              Expiry Date
+            </th>
+            <th class="px-4 py-2 text-right text-sm font-semibold">Value</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          {% for product in expiring_7_days %}
+          <tr>
+            <td class="px-4 py-2">
+              <a
+                href="{% url 'product_detail' product.id %}"
+                class="text-yellow-600 hover:underline"
+                >{{ product.name }}</a
+              >
+            </td>
+            <td class="px-4 py-2 text-right">{{ product.stock }} units</td>
+            <td class="px-4 py-2">{{ product.expiry_date|date:"M d, Y" }}</td>
+            <td class="px-4 py-2 text-right font-semibold">
+              ${{ product.total_value|floatformat:2 }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
