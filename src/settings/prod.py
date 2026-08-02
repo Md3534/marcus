@@ -15,7 +15,7 @@ ALLOWED_HOSTS = [
 
 DATABASES = {
 
-    "default": dj_database_url.config(default=os.getenv("DB_URL"))
+    "default": dj_database_url.config(default=os.getenv("DB_URI"))
 }
 
 
