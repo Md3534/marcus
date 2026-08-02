@@ -1,5 +1,4 @@
 from .base import *
-from src.config import PRODUCTION_DB
 
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
@@ -8,7 +7,7 @@ DEBUG = True
 # Use SQLite by default for quick local setup, but allow overriding
 # with Postgres environment variables (useful when running Postgres
 # in Docker and running `python manage.py runserver` locally).
-if os.getenv("DB_HOST"):
+if os.getenv("DB_HOST_NONE"):
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -35,7 +34,6 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
 ]
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Email settings are dynamically configured in base.py based on RESEND_API_KEY
 
 

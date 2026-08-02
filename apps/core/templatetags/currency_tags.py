@@ -1,12 +1,8 @@
 from django import template
-import locale
+from utils.currency import format_naira
 
 register = template.Library()
 
 @register.filter(name='naira')
 def naira(value):
-    try:
-        value = float(value)
-        return f"₦{value:,.2f}"
-    except (ValueError, TypeError):
-        return value
+    return format_naira(value)

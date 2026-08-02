@@ -1,4 +1,5 @@
 from .categories import Category
+from .locations import StorageLocation
 from .products_models import (
     Product, ProductImage, ProductInventory, StockBatch
 )

@@ -1,9 +1,14 @@
 # Use a stable Debian-based Python image
-FROM python:3.11-slim-bookworm
+FROM python:3.12-slim-bookworm
 
 # Prevent Python from writing .pyc files and buffering stdout/stderr
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+
+# Configure uv to use a virtual environment outside /app to isolate from host's .venv
+ENV UV_PROJECT_ENVIRONMENT=/venv
+ENV PATH="/venv/bin:$PATH"
+
 
 WORKDIR /app
 
@@ -11,15 +16,18 @@ WORKDIR /app
 # libpq5 is enough for the database driver at runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
-    netcat-traditional \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies
+RUN pip install uv
+RUN uv sync --frozen --no-dev
 
 # Copy the rest of the code
 COPY . .
 
-# Command to run Django
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Command to run entrypoint script
+CMD ["bash", "entrypoint.sh"]

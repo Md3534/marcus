@@ -253,6 +253,24 @@ def adjust_batch_quantity(request, batch_id):
     batch.product.update_stock_from_batches()
     
     messages.success(request, f"Batch quantity adjusted from {old_qty} to {new_qty}")
+    try:
+        from apps.notifications.notification_services import dispatch_action_notification_and_email
+        dispatch_action_notification_and_email(
+            actor=request.user,
+            title=f"Batch Stock Adjusted: #{batch.batch_number}",
+            message=f"Stock for '{batch.product.name}' (Batch #{batch.batch_number}) was adjusted from {old_qty} to {new_qty} units.",
+            target_obj=batch,
+            detail_dict={
+                "Product": batch.product.name,
+                "Batch Number": batch.batch_number,
+                "Old Quantity": old_qty,
+                "New Quantity": new_qty,
+                "Reason": reason or "N/A",
+                "Adjusted By": request.user.get_full_name() or request.user.username or request.user.email
+            }
+        )
+    except Exception as e:
+        pass
     return redirect('batch_detail', batch_id=batch_id)
 
 

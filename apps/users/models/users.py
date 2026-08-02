@@ -29,14 +29,14 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     class RoleChoices(models.TextChoices):
-        ADMIN = "admin", "Admin"
+        ADMIN = "admin", "Administrator"
+        MANAGER = "manager", "Manager"
         STAFF = "staff", "Staff"
-
-
+        VIEW_ONLY = "view_only", "View-Only"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     role = models.CharField(
-        max_length=10,
+        max_length=15,
         choices=RoleChoices.choices,
         default=RoleChoices.STAFF,
     )
@@ -57,3 +57,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    @property
+    def unread_notifications(self):
+        return self.notifications.filter(is_read=False)
+
+    @property
+    def unread_notifications_count(self):
+        return self.unread_notifications.count()
+

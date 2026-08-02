@@ -28,6 +28,7 @@ class Product(models.Model):
     best_before_days = models.PositiveIntegerField(null=True, blank=True)
     predicted_expiry_date = models.DateField(null=True, blank=True) # Set by AI
     is_ai_flagged = models.BooleanField(default=False) # AI flags for imminent expiry
+    storage_location = models.ForeignKey('products.StorageLocation', on_delete=models.SET_NULL, null=True, blank=True, related_name="products")
     
     def __str__(self):
         return self.name
@@ -105,6 +106,19 @@ class StockBatch(models.Model):
     production_date = models.DateField(null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
     
+    storage_location = models.ForeignKey('products.StorageLocation', on_delete=models.SET_NULL, null=True, blank=True, related_name="batches")
+    risk_probability = models.FloatField(default=0.0, help_text="Calculated risk of expiry (0.0 to 1.0)")
+    risk_tier = models.CharField(
+        max_length=20,
+        choices=[
+            ('critical', 'Critical'),
+            ('high', 'High'),
+            ('medium', 'Medium'),
+            ('low', 'Low')
+        ],
+        default='low'
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -115,6 +129,82 @@ class StockBatch(models.Model):
     def __str__(self):
         return f"{self.product.name} - #{self.batch_number} ({self.quantity} units)"
 
+    def calculate_dynamic_expiry(self):
+        """
+        Dynamically determines the expiry date based on storage conditions (temperature and humidity)
+        especially for perishable products like tomatoes.
+        """
+        if not self.production_date:
+            return None
+            
+        # Get base shelf life (default to product's best_before_days, category default, or 14 days)
+        base_days = self.product.best_before_days
+        if not base_days and self.product.category:
+            base_days = self.product.category.default_best_before_days
+        if not base_days:
+            base_days = 14  # Default fallback shelf life
+
+        # If we have storage conditions, apply temperature and humidity scaling factor
+        if self.storage_location and self.storage_location.temperature is not None and self.storage_location.humidity is not None:
+            temp = float(self.storage_location.temperature)
+            humidity = float(self.storage_location.humidity)
+            
+            # Determine optimal storage settings based on product name / strategy
+            is_tomato = "tomato" in self.product.name.lower()
+            is_perishable = (self.product.category and self.product.category.expiry_strategy == 'PERISHABLE') or is_tomato
+            
+            if is_tomato:
+                # Tomatoes optimal conditions: 10°C - 15°C, 85% - 90% humidity
+                optimal_temp_min = 10.0
+                optimal_temp_max = 15.0
+                optimal_humidity_min = 85.0
+                optimal_humidity_max = 90.0
+            elif is_perishable:
+                # Default perishable optimal conditions: 2°C - 8°C, 80% - 90% humidity
+                optimal_temp_min = 2.0
+                optimal_temp_max = 8.0
+                optimal_humidity_min = 80.0
+                optimal_humidity_max = 90.0
+            else:
+                # Non-perishables are less affected
+                optimal_temp_min = 15.0
+                optimal_temp_max = 22.0
+                optimal_humidity_min = 40.0
+                optimal_humidity_max = 60.0
+
+            # Calculate temperature factor
+            if optimal_temp_min <= temp <= optimal_temp_max:
+                temp_factor = 1.0
+            elif temp > optimal_temp_max:
+                # For every degree above optimal max, shelf life decreases by 8%
+                temp_factor = max(0.1, 1.0 - 0.08 * (temp - optimal_temp_max))
+            else:
+                # Below optimal min (chilling injury or freezing)
+                if temp < 0:
+                    temp_factor = 0.05  # Spoilage is almost immediate due to freezing damage
+                else:
+                    # For every degree below optimal min, shelf life decreases by 5%
+                    temp_factor = max(0.2, 1.0 - 0.05 * (optimal_temp_min - temp))
+
+            # Calculate humidity factor
+            if optimal_humidity_min <= humidity <= optimal_humidity_max:
+                humidity_factor = 1.0
+            elif humidity < optimal_humidity_min:
+                # Low humidity causes drying/shrinkage: shelf life decreases by 1.5% for every 1% below optimal
+                humidity_factor = max(0.5, 1.0 - 0.015 * (optimal_humidity_min - humidity))
+            else:
+                # High humidity (> max) promotes mold: shelf life decreases by 2% for every 1% above optimal
+                humidity_factor = max(0.4, 1.0 - 0.02 * (humidity - optimal_humidity_max))
+
+            # Combined quality degradation factor
+            overall_factor = temp_factor * humidity_factor
+            adjusted_days = max(1, int(round(base_days * overall_factor)))
+        else:
+            adjusted_days = base_days
+
+        from datetime import timedelta
+        return self.production_date + timedelta(days=adjusted_days)
+
     def is_expired(self):
         from django.utils import timezone
         if self.expiry_date:
@@ -122,10 +212,14 @@ class StockBatch(models.Model):
         return False
 
     def save(self, *args, **kwargs):
-        # Auto-calculate expiry if missing but category defaults exist
-        if not self.expiry_date and self.production_date and self.product.category.default_best_before_days:
-            from datetime import timedelta
-            self.expiry_date = self.production_date + timedelta(days=self.product.category.default_best_before_days)
+        # Do not calculate dynamic expiry. Use standard static calculations if expiry_date is not set.
+        if not self.expiry_date and self.production_date:
+            base_days = self.product.best_before_days
+            if not base_days and self.product.category:
+                base_days = self.product.category.default_best_before_days
+            if base_days:
+                from datetime import timedelta
+                self.expiry_date = self.production_date + timedelta(days=base_days)
         
         super().save(*args, **kwargs)
         # Update product totals after batch change

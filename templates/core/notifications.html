@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+
+{% block title %}Alerts & Audit Log - M_D Chippa{% endblock %}
+
+{% block content %}
+<div
+  class="mb-8 flex justify-between items-end"
+  x-data="{ activeTab: 'alerts' }"
+>
+  <div>
+    <h1 class="text-3xl font-bold text-gray-800">Alerts & Audit Log</h1>
+    <p class="text-gray-500">
+      Maintain a complete audit log of all expiry risk alerts generated,
+      dispatched, acknowledged, and resolved.
+    </p>
+  </div>
+  <div class="flex gap-3">
+    <div class="relative" x-data="{ exportOpen: false }">
+      <button
+        @click="exportOpen = !exportOpen"
+        class="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-lg font-bold hover:bg-gray-200 transition-all active:scale-95"
+      >
+        <i class="fas fa-file-export mr-2"></i>Export Report
+      </button>
+      <div
+        x-cloak
+        x-show="exportOpen"
+        @click.away="exportOpen = false"
+        class="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-lg shadow-xl z-20 py-2"
+      >
+        <div
+          class="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50"
+        >
+          Formats
+        </div>
+        <a
+          href="{% url 'export_report' 'expiry' 'csv' %}"
+          class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+        >
+          <i class="fas fa-file-csv w-5 text-gray-400"></i>CSV Format
+        </a>
+        <a
+          href="{% url 'export_report' 'expiry' 'pdf' %}"
+          class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+        >
+          <i class="fas fa-file-pdf w-5 text-gray-400"></i>PDF Document
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+<div
+  class="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden"
+  x-data="{ currentTab: new URLSearchParams(window.location.search).get('tab') || 'alerts' }"
+>
+  <!-- Tabs Header -->
+  <div class="flex border-b border-gray-100 bg-gray-50/50">
+    <button
+      @click="currentTab = 'alerts'"
+      :class="currentTab === 'alerts' ? 'border-slate-900 text-slate-900 bg-white font-bold' : 'border-transparent text-gray-500 hover:text-gray-700'"
+      class="px-8 py-4 border-b-2 text-sm transition-all outline-none"
+    >
+      Expiry Risk Alerts (Audit Log)
+    </button>
+    <button
+      @click="currentTab = 'inbox'"
+      :class="currentTab === 'inbox' ? 'border-slate-900 text-slate-900 bg-white font-bold' : 'border-transparent text-gray-500 hover:text-gray-700'"
+      class="px-8 py-4 border-b-2 text-sm transition-all outline-none"
+    >
+      In-App Inbox ({{ notifications.count }})
+    </button>
+  </div>
+  <!-- Alerts Audit Log Tab -->
+  <div x-show="currentTab === 'alerts'" class="p-6">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="bg-gray-50 text-gray-500 text-xs uppercase font-semibold">
+          <tr>
+            <th class="px-6 py-4">Risk Info</th>
+            <th class="px-6 py-4">Alert Message</th>
+            <th class="px-6 py-4">Status & History</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50 text-sm">
+          {% for alert in alerts %}
+          <tr class="hover:bg-gray-50/50 transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex flex-col gap-1.5">
+                {% if alert.risk_tier == 'critical' %}
+                <span
+                  class="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700 rounded-md w-max"
+                  >CRITICAL</span
+                >
+                {% else %}
+                <span
+                  class="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 rounded-md w-max"
+                  >HIGH RISK</span
+                >
+                {% endif %}
+                <div class="font-bold text-gray-800">
+                  {{ alert.batch.product.name }}
+                </div>
+                <div class="text-xs font-mono text-gray-400">
+                  Batch: #{{ alert.batch.batch_number }}
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 max-w-sm">
+              <p class="text-gray-600 leading-relaxed whitespace-pre-line">
+                {{ alert.message }}
+              </p>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex flex-col gap-1 text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-gray-500 uppercase"
+                    >Status:</span
+                  >
+                  {% if alert.status == 'generated' %}
+                  <span class="font-bold text-blue-500 uppercase text-[10px]"
+                    >Generated</span
+                  >
+                  {% elif alert.status == 'dispatched' %}
+                  <span class="font-bold text-indigo-500 uppercase text-[10px]"
+                    >Dispatched</span
+                  >
+                  {% elif alert.status == 'acknowledged' %}
+                  <span class="font-bold text-amber-800 uppercase text-[10px]"
+                    >Acknowledged</span
+                  >
+                  {% else %}
+                  <span class="font-bold text-emerald-600 uppercase text-[10px]"
+                    >Resolved</span
+                  >
+                  {% endif %}
+                </div>
+                <div class="text-gray-400 mt-1">
+                  <i class="far fa-clock mr-1"></i>Created: {{
+                  alert.created_at|date:"M d, Y H:i" }}
+                </div>
+                {% if alert.dispatched_at %}
+                <div class="text-indigo-400">
+                  <i class="fas fa-paper-plane mr-1"></i>Sent: {{
+                  alert.dispatched_at|date:"M d, Y H:i" }}
+                </div>
+                {% endif %} {% if alert.acknowledged_by %}
+                <div class="text-amber-800">
+                  <i class="fas fa-user-check mr-1"></i>Ack by: {{
+                  alert.acknowledged_by.email }} ({{
+                  alert.acknowledged_at|date:"M d, Y H:i" }})
+                </div>
+                {% endif %} {% if alert.resolved_by %}
+                <div class="text-emerald-600 font-medium">
+                  <i class="fas fa-check-double mr-1"></i>Resolved by: {{
+                  alert.resolved_by.email }} ({{ alert.resolved_at|date:"M d, Y
+                  H:i" }})
+                </div>
+                {% endif %}
+              </div>
+            </td>
+            <td class="px-6 py-4 text-right">
+              {% if user.role != 'view_only' %}
+              <div class="flex justify-end gap-2">
+                {% if alert.status == 'generated' or alert.status == 'dispatched' %}
+                <a
+                  href="{% url 'alert_acknowledge' alert.id %}"
+                  class="bg-amber-50 text-amber-800 border border-amber-200 px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-amber-100 transition-all"
+                >
+                  Acknowledge
+                </a>
+                {% endif %} {% if alert.status != 'resolved' %}
+                <a
+                  href="{% url 'alert_resolve' alert.id %}"
+                  class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-all"
+                >
+                  Resolve & Discard
+                </a>
+                {% endif %}
+              </div>
+              {% else %}
+              <span class="text-xs text-gray-300">View-Only</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="px-6 py-16 text-center text-gray-400 italic">
+              <div class="max-w-xs mx-auto">
+                <i class="fas fa-shield-alt text-gray-200 text-6xl mb-3"></i>
+                <p class="text-sm font-medium">
+                  No expiry risk alerts currently logged.
+                </p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <!-- In-App Notifications Tab -->
+  <div x-show="currentTab === 'inbox'" class="p-6">
+    {% if notifications %}
+    <div class="flex justify-between items-center mb-6">
+      <span class="text-sm font-bold text-gray-500">Inbox Messages</span>
+      {% if user.unread_notifications_count > 0 %}
+      <a
+        href="{% url 'mark_all_notifications_read' %}"
+        class="text-xs text-slate-700 hover:text-slate-900 font-bold hover:underline flex items-center gap-1"
+      >
+        <i class="fas fa-check-double"></i> Mark all as read
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+    <div class="space-y-4">
+      {% for notification in notifications %}
+      <div
+        class="p-5 rounded-lg border transition-all duration-200 {% if not notification.is_read %}bg-slate-50 border-slate-200 shadow-sm{% else %}bg-white border-gray-100{% endif %} flex justify-between items-center gap-4"
+      >
+        <div class="flex gap-4">
+          <div
+            class="p-3 bg-slate-100 text-slate-700 rounded-lg h-max mt-0.5 shrink-0"
+          >
+            <i class="fas fa-bell"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h4 class="font-bold text-gray-800">{{ notification.title }}</h4>
+              {% if not notification.is_read %}
+              <span
+                class="px-2 py-0.5 text-[9px] font-black uppercase bg-red-100 text-red-700 rounded-md"
+                >New</span
+              >
+              {% endif %}
+            </div>
+            <p
+              class="text-gray-600 text-sm mt-1 leading-relaxed whitespace-pre-line"
+            >
+              {{ notification.message }}
+            </p>
+            <div
+              class="flex items-center gap-4 mt-2 text-[10px] text-gray-400 font-medium"
+            >
+              <span
+                ><i class="far fa-clock mr-1"></i>{{
+                notification.created_at|date:"M d, Y H:i" }}</span
+              >
+              {% if notification.action_url %}
+              <a
+                href="{{ notification.action_url }}"
+                class="text-slate-700 hover:text-slate-900 font-medium hover:underline"
+              >
+                <i class="fas fa-external-link-alt mr-1"></i>View Related Item
+              </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% if not notification.is_read %}
+        <a
+          href="{% url 'mark_notification_read' notification.pk %}"
+          class="bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shrink-0"
+        >
+          Mark Read
+        </a>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div class="text-center py-16 text-gray-400 italic">
+        <div class="max-w-xs mx-auto">
+          <i class="fas fa-inbox text-gray-200 text-6xl mb-3"></i>
+          <p class="text-sm font-medium">Your in-app inbox is clean!</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,70 +1,466 @@
 {% extends 'base.html' %}
 
-{% block title %}Settings - Inventory System{% endblock %}
+{% block title %}System Settings - M_D Chippa{% endblock %}
 
 {% block content %}
 <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-800">System Settings</h1>
-    <p class="text-gray-500">Configure your inventory preferences and user profile.</p>
+  <h1 class="text-3xl font-bold text-gray-800">System Settings</h1>
+  <p class="text-gray-500">
+    Configure your system preferences, alert thresholds, escalation rules, and
+    API integrations.
+  </p>
 </div>
-
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- Sidebar for settings -->
-    <div class="space-y-2">
-        <button class="w-full flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border-2 border-yellow-600 text-yellow-700 font-bold">
-            <i class="fas fa-user-circle"></i> Profile Information
-        </button>
-        <button class="w-full flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-transparent hover:bg-gray-100 text-gray-700 font-medium transition-all">
-            <i class="fas fa-bell"></i> Notifications Config
-        </button>
-        <button class="w-full flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-transparent hover:bg-gray-100 text-gray-700 font-medium transition-all">
-            <i class="fas fa-shield-alt"></i> Security & Password
-        </button>
-        <button class="w-full flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-transparent hover:bg-gray-100 text-gray-700 font-medium transition-all">
-            <i class="fas fa-database"></i> Data Management
-        </button>
-    </div>
-
-    <!-- Main Settings Panel -->
-    <div class="lg:col-span-2 space-y-6">
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 border-b border-gray-50 pb-4">Profile Information</h2>
-            <form class="space-y-6">
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label class="text-sm font-bold text-gray-600">First Name</label>
-                        <input type="text" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-sm font-bold text-gray-600">Last Name</label>
-                        <input type="text" class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all">
-                    </div>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-sm font-bold text-gray-600">Email Address</label>
-                    <input type="email" value="{{ user.email }}" disabled class="w-full bg-gray-100 border border-gray-100 p-3 rounded-xl text-gray-400 cursor-not-allowed">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-sm font-bold text-gray-600">Bio</label>
-                    <textarea class="w-full bg-gray-50 border border-gray-100 p-3 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:bg-white outline-none transition-all" rows="4" placeholder="Tell us about yourself..."></textarea>
-                </div>
-                <div class="flex justify-end pt-4">
-                    <button type="submit" class="bg-yellow-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-yellow-100 hover:bg-yellow-700 transition-all">Save Changes</button>
-                </div>
-            </form>
+<div
+  class="grid grid-cols-1 lg:grid-cols-3 gap-8"
+  x-data="{ currentTab: new URLSearchParams(window.location.search).get('tab') || 'profile' }"
+>
+  <!-- Sidebar for settings -->
+  <div class="space-y-2">
+    <button
+      @click="currentTab = 'profile'"
+      :class="currentTab === 'profile' ? 'border-slate-900 text-slate-900 font-bold bg-slate-50' : 'border-transparent text-gray-600 hover:bg-gray-50'"
+      class="w-full flex items-center gap-3 p-4 bg-white rounded-lg shadow-sm border border-l-4 transition-all text-left"
+    >
+      <i class="fas fa-user-circle"></i> Profile Information
+    </button>
+    <button
+      @click="currentTab = 'simulation'"
+      :class="currentTab === 'simulation' ? 'border-slate-900 text-slate-900 font-bold bg-slate-50' : 'border-transparent text-gray-600 hover:bg-gray-50'"
+      class="w-full flex items-center gap-3 p-4 bg-white rounded-lg shadow-sm border border-l-4 transition-all text-left"
+    >
+      <i class="fas fa-flask"></i> Alert Simulation
+    </button>
+  </div>
+  <!-- Main Settings Panel -->
+  <div class="lg:col-span-2 space-y-6">
+    <!-- Profile Tab -->
+    <div
+      x-show="currentTab === 'profile'"
+      class="bg-white p-8 rounded-lg shadow-sm border border-gray-100 animate-fadeIn"
+    >
+      <h2
+        class="text-xl font-bold text-gray-800 mb-6 border-b border-gray-50 pb-4"
+      >
+        Profile Information
+      </h2>
+      <form class="space-y-6">
+        <div class="grid grid-cols-2 gap-6">
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-600">First Name</label>
+            <input
+              type="text"
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-600">Last Name</label>
+            <input
+              type="text"
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
+            />
+          </div>
         </div>
-
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 outline outline-2 outline-emerald-50 text-emerald-800">
-            <div class="flex items-center gap-4">
-                <div class="p-3 bg-emerald-100 rounded-2xl">
-                    <i class="fas fa-check-circle text-xl text-emerald-600"></i>
-                </div>
-                <div>
-                    <h3 class="font-bold">Email Verified</h3>
-                    <p class="text-sm opacity-80">Your email is verified and secured.</p>
-                </div>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-600">Email Address</label>
+            <input
+              type="email"
+              value="{{ user.email }}"
+              disabled
+              class="w-full bg-gray-100 border border-gray-100 p-3 rounded-lg text-gray-400 cursor-not-allowed"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-600">System Role</label>
+            <span
+              class="w-full block bg-gray-100 border border-gray-100 p-3 rounded-lg text-gray-700 font-bold capitalize"
+            >
+              {{ user.role }}
+            </span>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <label class="text-sm font-bold text-gray-600">Bio</label>
+          <textarea
+            class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
+            rows="4"
+            placeholder="Tell us about yourself..."
+          ></textarea>
+        </div>
+        <div class="flex justify-end pt-4">
+          <button
+            type="button"
+            @click="alert('Profile saving simulated successfully!')"
+            class="bg-slate-900 text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:bg-slate-800 transition-all"
+          >
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+    <!-- Alert Thresholds Tab -->
+    <div
+      x-show="currentTab === 'alerts'"
+      class="bg-white p-8 rounded-lg shadow-sm border border-gray-100 animate-fadeIn"
+    >
+      <h2
+        class="text-xl font-bold text-gray-800 mb-6 border-b border-gray-50 pb-4"
+      >
+        Expiry Alert Configurations
+      </h2>
+      {% if user.role == 'admin' %}
+      <form
+        action="{% url 'settings_update' %}"
+        method="POST"
+        class="space-y-6"
+      >
+        {% csrf_token %}
+        <h3
+          class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3"
+        >
+          Risk Classification Days Thresholds
+        </h3>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-red-600"
+              >Critical Threshold (days)</label
+            >
+            <input
+              type="number"
+              name="critical_threshold_days"
+              value="{{ config.critical_threshold_days }}"
+              required
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
+            />
+            <span class="text-[10px] text-gray-400"
+              >Within X days is Critical.</span
+            >
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-amber-600"
+              >High Threshold (days)</label
+            >
+            <input
+              type="number"
+              name="high_threshold_days"
+              value="{{ config.high_threshold_days }}"
+              required
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
+            />
+            <span class="text-[10px] text-gray-400"
+              >X to Critical days is High.</span
+            >
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-slate-700"
+              >Medium Threshold (days)</label
+            >
+            <input
+              type="number"
+              name="medium_threshold_days"
+              value="{{ config.medium_threshold_days }}"
+              required
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
+            />
+            <span class="text-[10px] text-gray-400"
+              >X to High days is Medium.</span
+            >
+          </div>
+        </div>
+        <h3
+          class="text-xs font-black text-gray-400 uppercase tracking-widest pt-4 border-t border-gray-50 mb-3"
+        >
+          Recipients & Dispatch Rules
+        </h3>
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700"
+              >Notification Emails (comma-separated)</label
+            >
+            <input
+              type="text"
+              name="recipient_emails"
+              value="{{ config.recipient_emails }}"
+              required
+              placeholder="e.g. admin@store.com, manager@store.com"
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700"
+              >Notification Phone Numbers (comma-separated)</label
+            >
+            <input
+              type="text"
+              name="recipient_phones"
+              value="{{ config.recipient_phones }}"
+              required
+              placeholder="e.g. +2348012345678, +2349012345678"
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
+            />
+          </div>
+        </div>
+        <h3
+          class="text-xs font-black text-gray-400 uppercase tracking-widest pt-4 border-t border-gray-50 mb-3"
+        >
+          Escalation Rules
+        </h3>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700"
+              >Escalation Timeout (hours)</label
+            >
+            <input
+              type="number"
+              name="escalation_hours"
+              value="{{ config.escalation_hours }}"
+              required
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
+            />
+            <span class="text-[10px] text-gray-400"
+              >Escalate if unacknowledged after X hours.</span
+            >
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700"
+              >Escalation Email Address</label
+            >
+            <input
+              type="email"
+              name="escalation_email"
+              value="{{ config.escalation_email }}"
+              required
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
+            />
+          </div>
+        </div>
+        <div class="flex justify-end pt-6 border-t border-gray-50">
+          <button
+            type="submit"
+            class="bg-slate-900 text-white px-8 py-3.5 rounded-lg font-bold shadow-lg hover:bg-slate-800 transition-all"
+          >
+            Update configurations & Retrain AI
+          </button>
+        </div>
+      </form>
+      {% else %}
+      <div
+        class="p-6 bg-red-50 text-red-800 rounded-lg border border-red-100 flex items-center gap-3"
+      >
+        <i class="fas fa-lock text-xl"></i>
+        <p class="text-sm">
+          Only system Administrators can update thresholds, recipient
+          directories, escalation rules, and AI parameters.
+        </p>
+      </div>
+      {% endif %}
+    </div>
+    <!-- API & Integrations Tab -->
+    <div
+      x-show="currentTab === 'api'"
+      class="bg-white p-8 rounded-lg shadow-sm border border-gray-100 animate-fadeIn"
+    >
+      <h2
+        class="text-xl font-bold text-gray-800 mb-6 border-b border-gray-50 pb-4"
+      >
+        API & Integrations Settings
+      </h2>
+      {% if user.role == 'admin' %}
+      <form
+        action="{% url 'settings_update' %}"
+        method="POST"
+        class="space-y-6"
+      >
+        {% csrf_token %}
+        <!-- Preserve alert configuration fields in hidden inputs -->
+        <input
+          type="hidden"
+          name="critical_threshold_days"
+          value="{{ config.critical_threshold_days }}"
+        />
+        <input
+          type="hidden"
+          name="high_threshold_days"
+          value="{{ config.high_threshold_days }}"
+        />
+        <input
+          type="hidden"
+          name="medium_threshold_days"
+          value="{{ config.medium_threshold_days }}"
+        />
+        <input
+          type="hidden"
+          name="recipient_emails"
+          value="{{ config.recipient_emails }}"
+        />
+        <input
+          type="hidden"
+          name="recipient_phones"
+          value="{{ config.recipient_phones }}"
+        />
+        <input
+          type="hidden"
+          name="escalation_hours"
+          value="{{ config.escalation_hours }}"
+        />
+        <input
+          type="hidden"
+          name="escalation_email"
+          value="{{ config.escalation_email }}"
+        />
+        <h3
+          class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3"
+        >
+          SMS Dispatch Gateway API
+        </h3>
+        <div class="space-y-4 mb-8">
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700"
+              >SMS Gateway Provider URL</label
+            >
+            <input
+              type="url"
+              name="sms_provider_url"
+              value="{{ config.sms_provider_url }}"
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">SMS API Key</label>
+            <input
+              type="password"
+              name="sms_api_key"
+              value="{{ config.sms_api_key|default:'' }}"
+              placeholder="••••••••••••••••••••"
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
+            />
+          </div>
+        </div>
+        <h3
+          class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 border-t border-gray-50 pt-6"
+        >
+          Email Delivery Gateway (Resend)
+        </h3>
+        <div
+          class="p-6 rounded-lg border transition-all duration-300 {% if resend_configured %}bg-green-50/30 border-green-100{% else %}bg-amber-50/30 border-amber-100{% endif %}"
+        >
+          <div class="flex items-start gap-4">
+            <div
+              class="p-3 rounded-lg {% if resend_configured %}bg-green-100 text-green-700{% else %}bg-amber-100 text-amber-700{% endif %}"
+            >
+              <i
+                class="fas {% if resend_configured %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %} text-xl"
+              ></i>
             </div>
+            <div class="space-y-1">
+              <h4 class="font-bold text-gray-800">Resend API Integration</h4>
+              <p class="text-sm text-gray-500">
+                {% if resend_configured %} Resend API key is configured and
+                active. Automatic email alerts will be sent on milestones: 1
+                month before, 2 weeks, 1 week, 5 days, 3 days, and 1 day before
+                product expiry. {% else %} Resend API key is not configured.
+                Email notifications will fall back to local console output for
+                development. Set <code>RESEND_API_KEY</code> in your environment
+                or <code>.env</code> file to activate email delivery.
+                {% endif %}
+              </p>
+            </div>
+          </div>
         </div>
+        <div class="flex justify-end pt-6 border-t border-gray-50 mt-8">
+          <button
+            type="submit"
+            class="bg-slate-900 text-white px-8 py-3.5 rounded-lg font-bold shadow-lg hover:bg-slate-800 transition-all"
+          >
+            Save API Settings
+          </button>
+        </div>
+      </form>
+      {% else %}
+      <div
+        class="p-6 bg-red-50 text-red-800 rounded-lg border border-red-100 flex items-center gap-3"
+      >
+        <i class="fas fa-lock text-xl"></i>
+        <p class="text-sm">
+          Only system Administrators can view or adjust SMS gateways and API
+          credentials.
+        </p>
+      </div>
+      {% endif %}
     </div>
+    <!-- Alert Simulation Tab -->
+    <div
+      x-show="currentTab === 'simulation'"
+      class="bg-white p-8 rounded-lg shadow-sm border border-gray-100 animate-fadeIn"
+    >
+      <h2
+        class="text-xl font-bold text-gray-800 mb-6 border-b border-gray-50 pb-4"
+      >
+        Alert Simulation Tools
+      </h2>
+      <p class="text-gray-500 mb-6 text-sm">
+        Use these tools to manually trigger or reset the expiry warning and risk
+        classification scanner for testing.
+      </p>
+      <div class="space-y-4">
+        <form
+          action="{% url 'simulate_expiry_alerts' %}"
+          method="POST"
+          class="p-6 bg-slate-50 rounded-lg border border-slate-200 flex flex-col gap-4"
+        >
+          {% csrf_token %}
+          <div class="flex items-start gap-4">
+            <div class="p-3 bg-slate-200 text-slate-800 rounded-lg">
+              <i class="fas fa-magic text-xl"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-gray-800">Run Expiry Alert Scanner</h4>
+              <p class="text-xs text-gray-500 mt-1">
+                Scan all active stock batches currently in the inventory and
+                immediately generate risk alerts and milestone notifications.
+              </p>
+            </div>
+          </div>
+          <div class="flex justify-end gap-3 mt-2">
+            <button
+              type="submit"
+              class="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all shadow-md"
+            >
+              Run Scanner Manually
+            </button>
+          </div>
+        </form>
+        <form
+          action="{% url 'clear_simulation_data' %}"
+          method="POST"
+          class="p-6 bg-red-50/20 rounded-lg border border-red-100/50 flex flex-col gap-4"
+        >
+          {% csrf_token %}
+          <div class="flex items-start gap-4">
+            <div class="p-3 bg-red-100 text-red-700 rounded-lg">
+              <i class="fas fa-trash-alt text-xl"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-gray-800">
+                Reset Alerts & Notifications History
+              </h4>
+              <p class="text-xs text-gray-500 mt-1">
+                Clear all generated alerts, notifications, and sent milestone
+                history to reset the system for scanner re-runs.
+              </p>
+            </div>
+          </div>
+          <div class="flex justify-end gap-3 mt-2">
+            <button
+              type="submit"
+              class="bg-red-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-red-700 transition-all shadow-md"
+            >
+              Reset History
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

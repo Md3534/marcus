@@ -91,8 +91,9 @@ STORAGES = {
 
 
 
-# Email backend for development
-# For production, use:
+# Email Configuration (Console Backend to output directly to the terminal stdout)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'onboarding@resend.dev')
 
 TEMPLATES = [
     {

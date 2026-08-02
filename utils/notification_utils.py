@@ -66,12 +66,14 @@ def send_password_reset_notification(user: User, reset_url: str):
         action_url=reset_url
     )
 
+from utils.currency import format_naira
+
 def send_order_confirmation(user: User, order_id: str, amount: float):
     """Send order confirmation notification"""
     return notify_user(
         user=user,
         title="Order Confirmed",
-        message=f"Your order #{order_id} for ${amount} has been confirmed.",
+        message=f"Your order #{order_id} for {format_naira(amount)} has been confirmed.",
         channels=['in_app', 'email'],
         category='order',
         extra_data={'order_id': order_id, 'amount': amount}

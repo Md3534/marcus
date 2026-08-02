@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-<br />
-{% block title %} Batch Details - Marcus Store {% endblock %}
+{% load currency_tags %}
+{% block title %} Batch Details - M_D Chippa {% endblock %}
 <br />
 {% block content %}
 <div class="max-w-4xl mx-auto">
@@ -8,7 +8,7 @@
   <div class="mb-6">
     <a
       href="{% url 'batch_management' %}"
-      class="text-yellow-600 hover:text-yellow-700 flex items-center gap-1 mb-4"
+      class="text-slate-700 hover:text-slate-900 flex items-center gap-1 mb-4 font-medium"
     >
       <i class="fas fa-arrow-left"></i> Back to Batches
     </a>
@@ -22,7 +22,7 @@
         <h2 class="text-xl font-bold mb-4">{{ product.name }}</h2>
 
         <div class="grid grid-cols-2 gap-4 mb-6">
-          <div class="border-l-4 border-yellow-600 pl-4">
+          <div class="border-l-4 border-slate-900 pl-4">
             <div class="text-sm text-gray-600">Batch Number</div>
             <div class="font-mono font-bold">{{ batch.batch_number }}</div>
           </div>
@@ -50,11 +50,11 @@
           </div>
           {% endif %} {% if batch.expiry_date %}
           <div
-            class="border-l-4 {% if is_expired %}border-red-600{% else %}border-orange-600{% endif %} pl-4"
+            class="border-l-4 {% if is_expired %}border-red-600{% else %}border-amber-500{% endif %} pl-4"
           >
             <div class="text-sm text-gray-600">Expiry Date</div>
             <div
-              class="font-bold {% if is_expired %}text-red-600{% else %}text-orange-600{% endif %}"
+              class="font-bold {% if is_expired %}text-red-600{% else %}text-amber-700{% endif %}"
             >
               {{ batch.expiry_date|date:"M d, Y" }}
             </div>
@@ -126,19 +126,19 @@
     <!-- Stock Value Card -->
     <div>
       <div
-        class="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg border border-yellow-200 p-6"
+        class="bg-slate-50 rounded-lg border border-slate-200 p-6"
       >
         <div class="text-sm font-semibold text-gray-600 uppercase">
           Batch Value
         </div>
-        <div class="text-3xl font-bold text-yellow-600 mt-2">
-          ${{ batch.quantity|add:batch.product.unit_price }}
+        <div class="text-3xl font-bold text-slate-900 mt-2">
+          {{ batch.total_value|naira }}
         </div>
         <div class="text-sm text-gray-600 mt-2">
-          {{ batch.quantity }} units × ${{ batch.product.unit_price }}
+          {{ batch.quantity }} units × {{ batch.product.unit_price|naira }}
         </div>
 
-        <div class="mt-6 pt-6 border-t border-yellow-200">
+        <div class="mt-6 pt-6 border-t border-slate-200">
           <div class="text-sm font-semibold text-gray-600 uppercase">
             Quick Stats
           </div>
@@ -268,7 +268,7 @@
         </button>
         <button
           type="submit"
-          class="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+          class="flex-1 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800"
         >
           Update
         </button>

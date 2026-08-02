@@ -1,10 +1,14 @@
-{% extends "base.html" %} {% block title %}Purchase Orders - Marcus Store{%
-endblock %} {% block content %}
+{% extends "base.html" %}
+{% load currency_tags %}
+
+{% block title %}Purchase Orders - M_D Chippa{% endblock %}
+
+{% block content %}
 <div class="max-w-7xl mx-auto">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-gray-900">Purchase Orders</h1>
     <button
-      class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+      class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
     >
       <i class="fas fa-plus mr-2"></i> Create PO
     </button>
@@ -32,19 +36,14 @@ endblock %} {% block content %}
         class="px-3 py-2 border border-gray-300 rounded-lg"
         onchange="this.form.submit()"
       >
-        <option value="all" {% if status_filter="" ="all" %}selected{% endif %}>
+        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>
           All Orders
         </option>
         {% for value, label in statuses.items %}
         <option
           value="{{ value }}"
-          {%
-          if
-          status_filter=""
-          ="value"
-          %}selected{%
-          endif
-          %}
+          {% if status_filter == value %}selected{% endif %}
+        >
         >
           {{ label }}
         </option>
@@ -82,7 +81,7 @@ endblock %} {% block content %}
               >
             </td>
             <td class="px-4 py-2 text-right font-semibold">
-              ${{ po.total_amount }}
+              {{ po.total_amount|naira }}
             </td>
             <td class="px-4 py-2 text-sm">
               {{ po.expected_delivery|date:"M d, Y" }}
