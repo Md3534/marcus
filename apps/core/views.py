@@ -246,6 +246,16 @@ def product_delete(request, pk):
     name = product.name
     product.delete()
     messages.success(request, f"Product '{name}' was deleted successfully.")
+    dispatch_action_notification_and_email(
+        actor=request.user,
+        title=f"Product Deleted: {name}",
+        message=f"Product '{name}' was deleted from inventory.",
+        target_obj=None,
+        detail_dict={
+            "Product Name": name,
+            "Deleted By": request.user.get_full_name() or request.user.username or request.user.email
+        }
+    )
     return redirect('product_list')
 
 
@@ -326,6 +336,65 @@ def category_add(request):
                     return JsonResponse({'error': msg}, status=400)
 
         return redirect('category_list')
+    return redirect('category_list')
+
+
+@login_required
+def category_edit(request, pk):
+    if not check_role(request.user, ['admin', 'manager', 'staff']):
+        return role_forbidden_response(request, "Permission Denied: View-Only users cannot edit categories.")
+
+    category = get_object_or_404(Category, pk=pk)
+    if request.method == 'POST':
+        name = (request.POST.get('name') or '').strip()
+        description = (request.POST.get('description') or '').strip()
+
+        if name:
+            existing = Category.objects.exclude(pk=category.pk).filter(name__iexact=name).first()
+            if existing:
+                messages.warning(request, f"Category '{name}' already exists.")
+                return redirect('category_list')
+
+            old_name = category.name
+            category.name = name
+            category.description = description
+            category.save()
+
+            messages.success(request, f"Category '{category.name}' updated successfully!")
+            dispatch_action_notification_and_email(
+                actor=request.user,
+                title=f"Category Updated: {category.name}",
+                message=f"Category '{old_name}' was updated to '{category.name}'.",
+                target_obj=category,
+                detail_dict={
+                    "Category Name": category.name,
+                    "Description": category.description or "None",
+                    "Updated By": request.user.get_full_name() or request.user.username or request.user.email
+                }
+            )
+        return redirect('category_list')
+    return redirect('category_list')
+
+
+@login_required
+def category_delete(request, pk):
+    if not check_role(request.user, ['admin', 'manager']):
+        return role_forbidden_response(request, "Permission Denied: Staff and View-Only users cannot delete categories.")
+
+    category = get_object_or_404(Category, pk=pk)
+    name = category.name
+    category.delete()
+    messages.success(request, f"Category '{name}' was deleted successfully.")
+    dispatch_action_notification_and_email(
+        actor=request.user,
+        title=f"Category Deleted: {name}",
+        message=f"Category '{name}' was deleted from the system.",
+        target_obj=None,
+        detail_dict={
+            "Category Name": name,
+            "Deleted By": request.user.get_full_name() or request.user.username or request.user.email
+        }
+    )
     return redirect('category_list')
 
 

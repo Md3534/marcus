@@ -66,3 +66,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     def unread_notifications_count(self):
         return self.unread_notifications.count()
 
+    def get_full_name(self):
+        if hasattr(self, 'profile') and self.profile is not None:
+            full_name = self.profile.get_full_name().strip()
+            if full_name:
+                return full_name
+        return self.email or self.get_username()
+

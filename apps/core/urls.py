@@ -12,6 +12,8 @@ urlpatterns = [
     
     path('categories/', views.category_list, name='category_list'),
     path('categories/add/', views.category_add, name='category_add'),
+    path('categories/<uuid:pk>/edit/', views.category_edit, name='category_edit'),
+    path('categories/<uuid:pk>/delete/', views.category_delete, name='category_delete'),
     path('api/categories/', views.api_categories_list, name='api_categories'),
     
     # Storage Locations (Requirement 2)

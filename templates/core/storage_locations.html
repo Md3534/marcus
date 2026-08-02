@@ -1,396 +1,198 @@
 {% extends 'base.html' %}
-
 {% block title %}Storage Locations - M_D Chippa{% endblock %}
-
 {% block content %}
-<div x-data="{ addOpen: false, editOpen: false, editLoc: {} }" class="w-full">
-  <div class="mb-8 flex justify-between items-end">
-    <div>
-      <h1 class="text-3xl font-bold text-gray-800">Storage Locations</h1>
-      <p class="text-gray-500">
-        Record, monitor, and update storage condition parameters (temperature,
-        humidity).
-      </p>
-    </div>
-    {% if user.role != 'view_only' %}
-    <button
-      @click="addOpen = true"
-      class="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all shadow-md active:scale-95"
-    >
-      <i class="fas fa-plus mr-2"></i>Add Location
-    </button>
-    {% endif %}
-  </div>
-
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% for location in locations %}
-    <div
-      class="bg-white rounded-lg border border-gray-100 shadow-sm p-6 flex flex-col justify-between hover:shadow-md transition-shadow"
-    >
+  <div class="w-full">
+    <div class="mb-8 flex justify-between items-end">
       <div>
-        <div class="flex justify-between items-start mb-4">
-          <div class="p-3 bg-slate-100 text-slate-700 rounded-lg">
-            <i class="fas fa-warehouse text-xl"></i>
-          </div>
-          <div class="flex gap-2">
-            {% if user.role != 'view_only' %}
-            <button
-              @click="editLoc = { id: '{{ location.id }}', name: '{{ location.name|escapejs }}', description: '{{ location.description|default:''|escapejs }}', temperature: '{{ location.temperature|default:'' }}', humidity: '{{ location.humidity|default:'' }}' }; editOpen = true"
-              class="p-2 text-gray-400 hover:text-slate-900 transition-colors"
-              title="Edit Conditions"
-            >
-              <i class="fas fa-edit"></i>
-            </button>
-            {% endif %} {% if user.role == 'admin' or user.role == 'manager' %}
-            <form
-              action="{% url 'storage_location_delete' location.id %}"
-              method="POST"
-              onsubmit="
-                return confirm(
-                  'Are you sure you want to delete this storage location?',
-                );
-              "
-            >
-              {% csrf_token %}
-              <button
-                type="submit"
-                class="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                title="Delete Location"
-              >
-                <i class="fas fa-trash"></i>
-              </button>
-            </form>
-            {% endif %}
-          </div>
-        </div>
-        <h3 class="text-xl font-bold text-gray-800 mb-1">
-          {{ location.name }}
-        </h3>
-        <p class="text-gray-500 text-sm mb-4">
-          {{ location.description|default:"No description provided." }}
+        <h1 class="text-3xl font-bold text-gray-800">Storage Locations</h1>
+        <p class="text-gray-500">
+          Record, monitor, and update storage condition parameters (temperature,
+          humidity).
         </p>
-
-        <div class="grid grid-cols-2 gap-3 mb-4">
-          <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
-            <span
-              class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block"
-              >Temp Target</span
-            >
-            <span class="text-lg font-bold text-gray-800">
-              {% if location.temperature %}{{ location.temperature }}°C{% else %}N/A{% endif %}
-            </span>
-          </div>
-          <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
-            <span
-              class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block"
-              >Humidity Target</span
-            >
-            <span class="text-lg font-bold text-gray-800">
-              {% if location.humidity %}{{ location.humidity }}%{% else %}N/A{% endif %}
-            </span>
-          </div>
-        </div>
       </div>
-
-      <div
-        class="pt-4 border-t border-gray-50 flex justify-between items-center text-xs text-gray-400"
-      >
-        <span>
-          <i class="fas fa-boxes mr-1"></i>
-          {{ location.product_count|default:0 }} Products Stored
-        </span>
-      </div>
-    </div>
-    {% empty %}
-    <div
-      class="col-span-full py-16 text-center bg-white rounded-lg border-2 border-dashed border-gray-100"
-    >
-      <i class="fas fa-warehouse text-gray-200 text-6xl mb-4"></i>
-      <h3 class="text-xl font-bold text-gray-800">No locations found</h3>
-      <p class="text-gray-500 mb-6">
-        Create storage locations to organize and monitor your stock
-        environments.
-      </p>
       {% if user.role != 'view_only' %}
-      <button
-        @click="addOpen = true"
-        class="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all shadow-md"
-      >
-        Add First Location
-      </button>
+        <button @click="modalOpen = true; modalType = 'custom'; modalTitle = 'Add New Storage Location'; storageFormMode = 'add'; storageLocationData = { id: '', name: '', description: '', temperature: '', humidity: '' }"
+                class="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all shadow-md active:scale-95">
+          <i class="fas fa-plus mr-2"></i>Add Location
+        </button>
       {% endif %}
     </div>
-    {% endfor %}
-  </div>
-
-  <!-- Slide-over Drawer for Adding Storage Location -->
-  <div
-    x-cloak
-    x-show="addOpen"
-    class="fixed inset-0 overflow-hidden z-50"
-    aria-labelledby="slide-over-title"
-    role="dialog"
-    aria-modal="true"
-  >
-    <div class="absolute inset-0 overflow-hidden">
-      <div
-        x-show="addOpen"
-        x-transition:enter="ease-in-out duration-500"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="ease-in-out duration-500"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-        @click="addOpen = false"
-      ></div>
-
-      <div
-        class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10"
-      >
-        <div
-          x-show="addOpen"
-          x-transition:enter="transform transition ease-in-out duration-500 sm:duration-700"
-          x-transition:enter-start="translate-x-full"
-          x-transition:enter-end="translate-x-0"
-          x-transition:leave="transform transition ease-in-out duration-500 sm:duration-700"
-          x-transition:leave-start="translate-x-0"
-          x-transition:leave-end="translate-x-full"
-          class="relative w-screen max-w-md pointer-events-auto"
-        >
-          <div
-            class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll scrollbar-hide rounded-l-lg"
-          >
-            <div
-              class="px-6 py-6 bg-slate-900 text-white"
-            >
-              <div class="flex items-start justify-between">
-                <h2 class="text-xl font-bold">Add New Storage Location</h2>
-                <div class="ml-3 h-7 flex items-center">
-                  <button
-                    @click="addOpen = false"
-                    type="button"
-                    class="bg-transparent rounded-md text-white hover:text-white/80 focus:outline-none"
-                  >
-                    <span class="sr-only">Close panel</span>
-                    <i class="fas fa-times text-2xl"></i>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for location in locations %}
+        <div class="bg-white rounded-lg border border-gray-100 shadow-sm p-6 flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div>
+            <div class="flex justify-between items-start mb-4">
+              <div class="p-3 bg-slate-100 text-slate-700 rounded-lg">
+                <i class="fas fa-warehouse text-xl"></i>
+              </div>
+              <div class="flex gap-2">
+                {% if user.role != 'view_only' %}
+                  <button @click="modalOpen = true; modalType = 'custom'; modalTitle = 'Edit Storage Location'; storageFormMode = 'edit'; storageLocationData = { id: '{{ location.id }}', name: '{{ location.name|escapejs }}', description: '{{ location.description|default:''|escapejs }}', temperature: '{{ location.temperature|default:'' }}', humidity: '{{ location.humidity|default:'' }}' }"
+                          class="p-2 text-gray-400 hover:text-slate-900 transition-colors"
+                          title="Edit Conditions">
+                    <i class="fas fa-edit"></i>
                   </button>
-                </div>
+                {% endif %}
+                {% if user.role == 'admin' or user.role == 'manager' %}
+                  <form action="{% url 'storage_location_delete' location.id %}"
+                        method="POST"
+                        onsubmit=" return confirm( 'Are you sure you want to delete this storage location?', ); ">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                            title="Delete Location">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </form>
+                {% endif %}
               </div>
             </div>
-            <div class="relative flex-1 px-6 py-8">
-              <form
-                action="{% url 'storage_location_list' %}"
-                method="POST"
-                @submit="addOpen = false"
-                class="space-y-6"
-              >
-                {% csrf_token %}
-                <div class="space-y-2">
-                  <label class="text-sm font-bold text-gray-700"
-                    >Location Name</label
-                  >
-                  <input
-                    type="text"
-                    name="name"
-                    required
-                    placeholder="e.g. Cold Room A, Shelf 2"
-                    class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
-                  />
-                </div>
-                <div class="space-y-2">
-                  <label class="text-sm font-bold text-gray-700"
-                    >Description</label
-                  >
-                  <textarea
-                    name="description"
-                    rows="3"
-                    placeholder="Enter location description..."
-                    class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
-                  ></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="space-y-2">
-                    <label class="text-sm font-bold text-gray-700"
-                      >Temperature (°C)</label
-                    >
-                    <input
-                      type="number"
-                      name="temperature"
-                      step="0.1"
-                      placeholder="e.g. 4.0"
-                      class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
-                    />
-                  </div>
-                  <div class="space-y-2">
-                    <label class="text-sm font-bold text-gray-700"
-                      >Humidity (%)</label
-                    >
-                    <input
-                      type="number"
-                      name="humidity"
-                      step="0.1"
-                      placeholder="e.g. 45.0"
-                      class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
-                    />
-                  </div>
-                </div>
-                <div class="pt-6 border-t border-gray-50">
-                  <button
-                    type="submit"
-                    class="w-full py-4 bg-slate-900 text-white font-bold rounded-lg shadow-lg hover:bg-slate-800 transition-all active:scale-[0.98]"
-                  >
-                    Create Location
-                  </button>
-                  <button
-                    @click="addOpen = false"
-                    type="button"
-                    class="w-full mt-3 py-4 bg-gray-50 text-gray-500 font-bold rounded-lg hover:bg-gray-100 transition-all"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Slide-over Drawer for Editing Storage Location -->
-  <div
-    x-cloak
-    x-show="editOpen"
-    class="fixed inset-0 overflow-hidden z-50"
-    aria-labelledby="slide-over-title"
-    role="dialog"
-    aria-modal="true"
-  >
-    <div class="absolute inset-0 overflow-hidden">
-      <div
-        x-show="editOpen"
-        x-transition:enter="ease-in-out duration-500"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="ease-in-out duration-500"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-        @click="editOpen = false"
-      ></div>
-
-      <div
-        class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10"
-      >
-        <div
-          x-show="editOpen"
-          x-transition:enter="transform transition ease-in-out duration-500 sm:duration-700"
-          x-transition:enter-start="translate-x-full"
-          x-transition:enter-end="translate-x-0"
-          x-transition:leave="transform transition ease-in-out duration-500 sm:duration-700"
-          x-transition:leave-start="translate-x-0"
-          x-transition:leave-end="translate-x-full"
-          class="relative w-screen max-w-md pointer-events-auto"
-        >
-          <div
-            class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll scrollbar-hide rounded-l-lg"
-          >
-            <div
-              class="px-6 py-6 bg-slate-900 text-white"
-            >
-              <div class="flex items-start justify-between">
-                <h2 class="text-xl font-bold">Edit Storage Location</h2>
-                <div class="ml-3 h-7 flex items-center">
-                  <button
-                    @click="editOpen = false"
-                    type="button"
-                    class="bg-transparent rounded-md text-white hover:text-white/80 focus:outline-none"
-                  >
-                    <span class="sr-only">Close panel</span>
-                    <i class="fas fa-times text-2xl"></i>
-                  </button>
-                </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-1">{{ location.name }}</h3>
+            <p class="text-gray-500 text-sm mb-4">{{ location.description|default:"No description provided." }}</p>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Temp Target</span>
+                <span class="text-lg font-bold text-gray-800">
+                  {% if location.temperature %}{{ location.temperature }}°C{% else %}N/A{% endif %}
+                </span>
+              </div>
+              <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Humidity Target</span>
+                <span class="text-lg font-bold text-gray-800">
+                  {% if location.humidity %}{{ location.humidity }}%{% else %}N/A{% endif %}
+                </span>
               </div>
             </div>
-            <div class="relative flex-1 px-6 py-8">
-              <form
-                :action="'/locations/' + editLoc.id + '/edit/'"
-                method="POST"
-                @submit="editOpen = false"
-                class="space-y-6"
-              >
-                {% csrf_token %}
-                <div class="space-y-2">
-                  <label class="text-sm font-bold text-gray-700"
-                    >Location Name</label
-                  >
-                  <input
-                    type="text"
-                    name="name"
-                    x-model="editLoc.name"
-                    required
-                    class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
-                  />
-                </div>
-                <div class="space-y-2">
-                  <label class="text-sm font-bold text-gray-700"
-                    >Description</label
-                  >
-                  <textarea
-                    name="description"
-                    x-model="editLoc.description"
-                    rows="3"
-                    class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
-                  ></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="space-y-2">
-                    <label class="text-sm font-bold text-gray-700"
-                      >Temperature (°C)</label
-                    >
-                    <input
-                      type="number"
-                      name="temperature"
-                      step="0.1"
-                      x-model="editLoc.temperature"
-                      class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
-                    />
-                  </div>
-                  <div class="space-y-2">
-                    <label class="text-sm font-bold text-gray-700"
-                      >Humidity (%)</label
-                    >
-                    <input
-                      type="number"
-                      name="humidity"
-                      step="0.1"
-                      x-model="editLoc.humidity"
-                      class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"
-                    />
-                  </div>
-                </div>
-                <div class="pt-6 border-t border-gray-50">
-                  <button
-                    type="submit"
-                    class="w-full py-4 bg-slate-900 text-white font-bold rounded-lg shadow-lg hover:bg-slate-800 transition-all active:scale-[0.98]"
-                  >
-                    Save Conditions
-                  </button>
-                  <button
-                    @click="editOpen = false"
-                    type="button"
-                    class="w-full mt-3 py-4 bg-gray-50 text-gray-500 font-bold rounded-lg hover:bg-gray-100 transition-all"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
+          </div>
+          <div class="pt-4 border-t border-gray-50 flex justify-between items-center text-xs text-gray-400">
+            <span>
+              <i class="fas fa-boxes mr-1"></i>
+              {{ location.product_count|default:0 }} Products Stored
+            </span>
           </div>
         </div>
-      </div>
+      {% empty %}
+        <div class="col-span-full py-16 text-center bg-white rounded-lg border-2 border-dashed border-gray-100">
+          <i class="fas fa-warehouse text-gray-200 text-6xl mb-4"></i>
+          <h3 class="text-xl font-bold text-gray-800">No locations found</h3>
+          <p class="text-gray-500 mb-6">
+            Create storage locations to organize and monitor your stock
+            environments.
+          </p>
+          {% if user.role != 'view_only' %}
+            <button @click="modalOpen = true; modalType = 'custom'; modalTitle = 'Add New Storage Location'; storageFormMode = 'add'; storageLocationData = { id: '', name: '', description: '', temperature: '', humidity: '' }"
+                    class="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all shadow-md">
+              Add First Location
+            </button>
+          {% endif %}
+        </div>
+      {% endfor %}
     </div>
+    {% block modal_content %}
+      <div x-show="storageFormMode === 'add'" class="space-y-6">
+        <form action="{% url 'storage_location_list' %}"
+              method="POST"
+              @submit="modalOpen = false"
+              class="space-y-6">
+          {% csrf_token %}
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Location Name</label>
+            <input type="text"
+                   name="name"
+                   required
+                   placeholder="e.g. Cold Room A, Shelf 2"
+                   class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all" />
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Description</label>
+            <textarea name="description"
+                      rows="3"
+                      placeholder="Enter location description..."
+                      class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-gray-700">Temperature (°C)</label>
+              <input type="number"
+                     name="temperature"
+                     step="0.1"
+                     placeholder="e.g. 4.0"
+                     class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-gray-700">Humidity (%)</label>
+              <input type="number"
+                     name="humidity"
+                     step="0.1"
+                     placeholder="e.g. 45.0"
+                     class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all" />
+            </div>
+          </div>
+          <div class="pt-6 border-t border-gray-50">
+            <button type="submit"
+                    class="w-full py-4 bg-slate-900 text-white font-bold rounded-lg shadow-lg hover:bg-slate-800 transition-all active:scale-[0.98]">
+              Create Location
+            </button>
+            <button @click="modalOpen = false"
+                    type="button"
+                    class="w-full mt-3 py-4 bg-gray-50 text-gray-500 font-bold rounded-lg hover:bg-gray-100 transition-all">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+      <div x-show="storageFormMode === 'edit'" class="space-y-6">
+        <form :action="'/locations/' + storageLocationData.id + '/edit/'"
+              method="POST"
+              @submit="modalOpen = false"
+              class="space-y-6">
+          {% csrf_token %}
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Location Name</label>
+            <input type="text"
+                   name="name"
+                   x-model="storageLocationData.name"
+                   required
+                   class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all" />
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Description</label>
+            <textarea name="description"
+                      x-model="storageLocationData.description"
+                      rows="3"
+                      class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all"></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-gray-700">Temperature (°C)</label>
+              <input type="number"
+                     name="temperature"
+                     step="0.1"
+                     x-model="storageLocationData.temperature"
+                     class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-gray-700">Humidity (%)</label>
+              <input type="number"
+                     name="humidity"
+                     step="0.1"
+                     x-model="storageLocationData.humidity"
+                     class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all" />
+            </div>
+          </div>
+          <div class="pt-6 border-t border-gray-50">
+            <button type="submit"
+                    class="w-full py-4 bg-slate-900 text-white font-bold rounded-lg shadow-lg hover:bg-slate-800 transition-all active:scale-[0.98]">
+              Save Conditions
+            </button>
+            <button @click="modalOpen = false"
+                    type="button"
+                    class="w-full mt-3 py-4 bg-gray-50 text-gray-500 font-bold rounded-lg hover:bg-gray-100 transition-all">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    {% endblock %}
   </div>
-</div>
 {% endblock %}
