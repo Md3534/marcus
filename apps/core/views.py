@@ -267,9 +267,9 @@ def handle_product_image_upload(product, image_file=None, image_url=None):
     # Fallback to local Django storage or direct image_url if Cloudinary wasn't configured or failed:
     if not uploaded_url:
         if image_file:
-            ProductImage.objects.filter(product=product, is_primary=True).update(is_primary=False)
-            img_obj = ProductImage.objects.create(product=product, image=image_file, is_primary=True)
-            return img_obj
+            from django.core.files.storage import default_storage
+            filename = default_storage.save(f"products/{image_file.name}", image_file)
+            uploaded_url = default_storage.url(filename)
         elif image_url:
             uploaded_url = image_url
 
@@ -282,6 +282,7 @@ def handle_product_image_upload(product, image_file=None, image_url=None):
         )
         return img_obj
     return None
+
 
 
 @login_required

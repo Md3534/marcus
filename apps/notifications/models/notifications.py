@@ -92,12 +92,12 @@ class AlertConfiguration(models.Model):
     medium_threshold_days = models.PositiveIntegerField(default=60, help_text="Expiry within these days is Medium")
     
     # Notification recipients
-    recipient_emails = models.TextField(default="admin@marcusstore.com", help_text="Comma-separated emails")
+    recipient_emails = models.TextField(default="markusdaniel171@gmail.com", help_text="Comma-separated emails")
     recipient_phones = models.TextField(default="+1234567890", help_text="Comma-separated phone numbers")
     
     # Escalation rules
     escalation_hours = models.PositiveIntegerField(default=24, help_text="Hours before escalation if unacknowledged")
-    escalation_email = models.EmailField(default="manager@marcusstore.com", help_text="Escalation email address")
+    escalation_email = models.EmailField(default="markusdaniel171@gmail.com", help_text="Escalation email address")
     
     # API Integration settings
     sms_provider_url = models.URLField(default="https://api.sms-gateway.com/send", help_text="SMS gateway API URL")
@@ -116,7 +116,17 @@ class AlertConfiguration(models.Model):
     @classmethod
     def get_solo(cls):
         obj, created = cls.objects.get_or_create(id="00000000-0000-0000-0000-000000000001")
+        need_save = False
+        if created or obj.recipient_emails == "admin@marcusstore.com":
+            obj.recipient_emails = "markusdaniel171@gmail.com"
+            need_save = True
+        if created or obj.escalation_email == "manager@marcusstore.com":
+            obj.escalation_email = "markusdaniel171@gmail.com"
+            need_save = True
+        if need_save:
+            obj.save()
         return obj
+
 
     def get_cloudinary_credentials(self):
         import os

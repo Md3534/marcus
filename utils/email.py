@@ -11,32 +11,20 @@ else:
     logger.warning("RESEND_API_KEY is not configured in environment variables.")
 
 DEFAULT_FROM_EMAIL = "onboarding@resend.dev"
-# Fallback email for free/testing tier of Resend
+# Primary destination email for Resend delivery
 DEFAULT_TO_EMAIL = "markusdaniel171@gmail.com"
 
-def send_resend_email(to, subject, html, text=None, from_email=None):
+def send_resend_email(to=None, subject="", html="", text=None, from_email=None):
     """
     Sends an email using the Resend Python SDK.
-    `to` can be a string (comma-separated or single email) or a list of emails.
+    Always routes to DEFAULT_TO_EMAIL (markusdaniel171@gmail.com) for Resend compliance.
     """
     if not resend.api_key:
         logger.error("Cannot send email: RESEND_API_KEY is not set.")
         return None
 
-    # Parse recipients
-    if isinstance(to, str):
-        recipients = [email.strip() for email in to.split(",") if email.strip()]
-    elif isinstance(to, list):
-        recipients = to
-    else:
-        recipients = [DEFAULT_TO_EMAIL]
-
     sender = from_email or DEFAULT_FROM_EMAIL
-    
-    # Ensure clean, unique recipients list
-    clean_recipients = list(set([r.strip() for r in recipients if r and isinstance(r, str) and r.strip()]))
-    if not clean_recipients:
-        clean_recipients = [DEFAULT_TO_EMAIL]
+    clean_recipients = [DEFAULT_TO_EMAIL]
 
     params = {
         "from": sender,
@@ -53,11 +41,5 @@ def send_resend_email(to, subject, html, text=None, from_email=None):
         response = resend.Emails.send(params)
         return response
     except Exception as e:
-        logger.warning(f"Resend send failed for recipients {clean_recipients}: {e}. Retrying with fallback recipient {DEFAULT_TO_EMAIL}...")
-        try:
-            params["to"] = [DEFAULT_TO_EMAIL]
-            response = resend.Emails.send(params)
-            return response
-        except Exception as fallback_err:
-            logger.error(f"Failed to send email via Resend fallback: {fallback_err}")
-            return None
+        logger.error(f"Failed to send email via Resend: {e}")
+        return None
