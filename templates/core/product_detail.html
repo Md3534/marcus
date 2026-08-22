@@ -68,10 +68,17 @@
         <div class="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-gray-900">Batch Management (FEFO)</h2>
-                <a href="{% url 'batch_management' %}" class="text-slate-700 hover:text-slate-900 font-medium text-sm">
-                    View All Batches <i class="fas fa-arrow-right ml-1"></i>
-                </a>
+                <div class="flex items-center gap-3">
+                    <button @click="editingProduct = { id: '{{ product.id }}', name: '{{ product.name|escapejs }}' }; modalOpen = true; modalType = 'add_batch'; modalTitle = 'Add Batch for {{ product.name|escapejs }}'" class="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm">
+                        <i class="fas fa-plus"></i> Add Batch
+                    </button>
+
+                    <a href="{% url 'batch_management' %}" class="text-slate-700 hover:text-slate-900 font-medium text-sm">
+                        View All Batches <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
             </div>
+
 
             {% if batches %}
             <div class="overflow-x-auto">
@@ -202,80 +209,18 @@
             </div>
         </div>
     </div>
-</div>
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-8 border-b border-gray-50 flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-gray-800">Stock Batches</h2>
-                <button class="bg-slate-900 text-white px-5 py-2 rounded-lg font-bold text-sm hover:bg-slate-800 transition-all">Add Batch</button>
-            </div>
-            <div class="p-0">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 text-gray-400 text-[10px] uppercase font-black tracking-widest">
-                        <tr>
-                            <th class="px-8 py-4">Batch #</th>
-                            <th class="px-8 py-4">Quantity</th>
-                            <th class="px-8 py-4">Production</th>
-                            <th class="px-8 py-4">Expiry</th>
-                            <th class="px-8 py-4 text-right">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        {% for batch in batches %}
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-8 py-5 font-mono text-sm font-bold text-gray-800">#{{ batch.batch_number }}</td>
-                            <td class="px-8 py-5 text-gray-700 font-medium">{{ batch.quantity }} / {{ batch.initial_quantity }}</td>
-                            <td class="px-8 py-5 text-gray-500 text-sm">{{ batch.production_date|date:"M d, Y"|default:"N/A" }}</td>
-                            <td class="px-8 py-5 text-gray-800 font-semibold">{{ batch.expiry_date|date:"M d, Y"|default:"N/A" }}</td>
-                            <td class="px-8 py-5 text-right">
-                                {% if batch.is_expired %}
-                                    <span class="px-3 py-1 bg-red-100 text-red-700 rounded-md text-[10px] font-black uppercase">Expired</span>
-                                {% else %}
-                                    <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-md text-[10px] font-black uppercase">Active</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="px-8 py-12 text-center text-gray-400 italic">No batches found for this product.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Right: Inventory Settings -->
-    <div class="space-y-6">
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 class="text-xl font-bold text-gray-800 mb-6">Inventory Config</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="text-xs font-black text-gray-400 uppercase tracking-wider block mb-1">SKU Code</label>
-                    <p class="font-mono text-gray-800 bg-gray-50 p-3 rounded-lg border border-gray-100">{{ product.inventory.sku|default:"NOT-SET" }}</p>
-                </div>
-                <div>
-                    <label class="text-xs font-black text-gray-400 uppercase tracking-wider block mb-1">Low Stock Threshold</label>
-                    <div class="flex items-center gap-3">
-                        <span class="text-2xl font-bold text-gray-800">{{ product.inventory.low_stock_threshold }}</span>
-                        <span class="text-gray-400 text-sm">units</span>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-                    <span class="text-sm font-bold text-slate-800">Track Inventory</span>
-                    <div class="w-10 h-6 bg-slate-900 rounded-md flex items-center justify-end px-1">
-                        <div class="w-4 h-4 bg-white rounded-md"></div>
-                    </div>
-                </div>
-            </div>
-            <button @click="modalOpen = true; modalType = 'edit'; modalTitle = 'Edit Product'; editingProduct = { id: '{{ product.id }}', name: '{{ product.name|escapejs }}', description: '{{ product.description|default:''|escapejs }}', category: '{{ product.category.id }}', unit_price: {{ product.unit_price }}, stock: {{ product.stock }}, production_date: '{{ product.production_date|date:'Y-m-d' }}', best_before_days: '{{ product.best_before_days|default:'' }}', expiry_date: '{{ product.expiry_date|date:'Y-m-d' }}' }" class="w-full mt-8 py-3 border-2 border-slate-900 text-slate-900 font-bold rounded-lg hover:bg-slate-50 transition-all">Edit Product Info</button>
-        </div>
-
         <div class="bg-red-50 p-6 rounded-lg border border-red-100">
             <h3 class="text-red-800 font-bold mb-4">Danger Zone</h3>
             <p class="text-red-600 text-xs mb-4">Deleting this product will remove all associated stock batches and history. This action cannot be undone.</p>
-            <button class="w-full py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-all shadow-lg shadow-red-100">Delete Product</button>
+            <form method="POST" action="{% url 'product_delete' product.id %}" onsubmit="return confirm('Are you sure you want to delete \'{{ product.name|escapejs }}\'? All associated batches will be permanently removed.');">
+                {% csrf_token %}
+                <button type="submit" class="w-full py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-all shadow-lg shadow-red-100 flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fas fa-trash-alt"></i> Delete Product
+                </button>
+            </form>
         </div>
+
     </div>
 </div>
+
 {% endblock content %}

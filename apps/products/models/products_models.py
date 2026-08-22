@@ -46,7 +46,21 @@ class Product(models.Model):
     @property
     def primary_image_url(self):
         img = self.images.filter(is_primary=True).first()
-        return img.image.url if img else ""
+        if not img:
+            img = self.images.first()
+        if img and img.image:
+            try:
+                if hasattr(img.image, 'url'):
+                    return img.image.url
+                return str(img.image)
+            except Exception:
+                return str(img.image) if img.image else ""
+        return ""
+
+    @property
+    def image_url(self):
+        return self.primary_image_url
+
 
     @property
     def is_expired(self):

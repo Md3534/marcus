@@ -103,6 +103,11 @@ class AlertConfiguration(models.Model):
     sms_provider_url = models.URLField(default="https://api.sms-gateway.com/send", help_text="SMS gateway API URL")
     sms_api_key = models.CharField(max_length=255, blank=True, null=True, help_text="SMS provider API key")
     
+    # Cloudinary Storage settings
+    cloudinary_cloud_name = models.CharField(max_length=255, blank=True, null=True, help_text="Cloudinary Cloud Name")
+    cloudinary_api_key = models.CharField(max_length=255, blank=True, null=True, help_text="Cloudinary API Key")
+    cloudinary_api_secret = models.CharField(max_length=255, blank=True, null=True, help_text="Cloudinary API Secret")
+    
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -112,6 +117,20 @@ class AlertConfiguration(models.Model):
     def get_solo(cls):
         obj, created = cls.objects.get_or_create(id="00000000-0000-0000-0000-000000000001")
         return obj
+
+    def get_cloudinary_credentials(self):
+        import os
+        from django.conf import settings
+        cloud_name = self.cloudinary_cloud_name or os.environ.get('CLOUDINARY_CLOUD_NAME') or getattr(settings, 'CLOUDINARY_STORAGE', {}).get('CLOUD_NAME')
+        api_key = self.cloudinary_api_key or os.environ.get('CLOUDINARY_API_KEY') or getattr(settings, 'CLOUDINARY_STORAGE', {}).get('API_KEY')
+        api_secret = self.cloudinary_api_secret or os.environ.get('CLOUDINARY_API_SECRET') or getattr(settings, 'CLOUDINARY_STORAGE', {}).get('API_SECRET')
+        return {
+            'cloud_name': cloud_name,
+            'api_key': api_key,
+            'api_secret': api_secret,
+            'is_configured': bool(cloud_name and api_key and api_secret)
+        }
+
 
     def __str__(self):
         return "Alert Configuration"

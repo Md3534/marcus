@@ -1,4 +1,4 @@
-<form :action="'/products/' + editingProduct.id + '/edit/'" method="POST" @submit="modalOpen = false" class="space-y-6">
+<form :action="'/products/' + editingProduct.id + '/edit/'" method="POST" enctype="multipart/form-data" @submit="modalOpen = false" class="space-y-6">
     {% csrf_token %}
     <input type="hidden" name="action" value="edit">
     <div class="space-y-2">
@@ -41,6 +41,17 @@
             <label class="text-sm font-bold text-gray-700">Unit Price (₦)</label>
             <input type="number" name="unit_price" x-model="editingProduct.unit_price" step="0.01" min="0" required 
                    class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all">
+        </div>
+    </div>
+
+    <!-- Product Image Upload (Cloudinary) -->
+    <div class="space-y-2">
+        <label class="text-sm font-bold text-gray-700">Update Image (Cloudinary Cloud Storage)</label>
+        <div class="space-y-2">
+            <input type="file" name="product_image" accept="image/*"
+                   class="w-full p-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-slate-900 file:text-white hover:file:bg-slate-800 transition-all cursor-pointer">
+            <input type="url" name="image_url" placeholder="Or enter new Image URL (e.g. https://...)"
+                   class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg text-xs focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all">
         </div>
     </div>
 

@@ -74,50 +74,64 @@ def check_and_generate_alerts():
 def dispatch_alert_notifications(alert, config):
     """
     Dispatches notifications for a generated alert to configured recipients
-    via email, SMS, and in-app channels.
+    and all registered users via Resend email, SMS, and in-app channels.
     """
-    # Recipients from configuration
-    emails = [e.strip() for e in config.recipient_emails.split(',') if e.strip()]
+    # Recipients from configuration + registered active users
+    config_emails = [e.strip() for e in config.recipient_emails.split(',') if e.strip()]
+    user_emails = list(User.objects.filter(is_active=True).exclude(email='').values_list('email', flat=True))
+    emails = list(set(config_emails + user_emails))
+    
     phones = [p.strip() for p in config.recipient_phones.split(',') if p.strip()]
     
     email_sent = False
     sms_sent = False
     in_app_sent = False
     
-    # Send email notification
+    # Send email notification via Resend
     if emails:
         try:
             subject = f"[{alert.risk_tier.upper()} RISK] Expiry Alert for {alert.batch.product.name}"
-            send_mail(
+            html_content = f"""
+            <html>
+              <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                  <h2 style="color: #e53e3e; margin-top: 0;">[{alert.risk_tier.upper()} RISK] Product Expiry Warning</h2>
+                  <p>Hello,</p>
+                  <p>An automated expiry alert has been triggered for a product in your inventory:</p>
+                  <div style="background-color: #fff5f5; border-left: 4px solid #e53e3e; padding: 15px; margin: 15px 0;">
+                    <p style="margin: 0; font-weight: bold; font-size: 16px; color: #9b2c2c;">{alert.batch.product.name}</p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #4a5568;">Batch Number: <strong>#{alert.batch.batch_number}</strong></p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #4a5568;">Expiry Date: <strong>{alert.batch.expiry_date}</strong></p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #4a5568;">Remaining Stock: <strong>{alert.batch.quantity} units</strong></p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #4a5568;">Risk Tier: <strong style="text-transform: uppercase; color: #e53e3e;">{alert.risk_tier}</strong></p>
+                  </div>
+                  <p style="font-size: 12px; color: #a0aec0; margin-top: 20px; text-align: center;">Sent via Resend Automated Expiry Alerts &bull; M_D Chippa Inventory</p>
+                </div>
+              </body>
+            </html>
+            """
+            res = send_resend_email(
+                to=emails,
                 subject=subject,
-                message=alert.message,
-                from_email=settings.DEFAULT_FROM_EMAIL or 'alerts@marcusstore.com',
-                recipient_list=emails,
-                fail_silently=False
+                html=html_content,
+                text=alert.message
             )
-            email_sent = True
+            if res:
+                email_sent = True
         except Exception as e:
             logger.error(f"Failed to send email alert: {e}")
             
     # Send SMS notification (simulated via API or logger)
     if phones:
         try:
-            # Simulated SMS dispatch
             logger.info(f"Dispatching SMS to {phones}: {alert.message}")
-            if config.sms_api_key and config.sms_provider_url:
-                # Actual API call (mocked or executed)
-                payload = {
-                    'api_key': config.sms_api_key,
-                    'to': phones,
-                    'message': alert.message
-                }
-                # requests.post(config.sms_provider_url, json=payload, timeout=5)
             sms_sent = True
         except Exception as e:
             logger.error(f"Failed to dispatch SMS alert: {e}")
             
-    # Send In-App notification to all Admin/Manager users
-    staff_users = User.objects.filter(role__in=['admin', 'manager'])
+    # Send In-App notification to all registered users
+    staff_users = User.objects.filter(is_active=True)
+
     for u in staff_users:
         try:
             Notification.objects.create(
@@ -142,7 +156,7 @@ def dispatch_alert_notifications(alert, config):
 def check_and_escalate_alerts(config):
     """
     Check if any alert has remained unacknowledged longer than escalation_hours.
-    If yes, send an escalation email to the escalation contact.
+    If yes, send an escalation email to the escalation contact via Resend.
     """
     cutoff = timezone.now() - timezone.timedelta(hours=config.escalation_hours)
     unacknowledged_alerts = AlertLog.objects.filter(
@@ -159,14 +173,13 @@ def check_and_escalate_alerts(config):
                 f"Generated at: {alert.created_at}\n\n"
                 f"Please take action immediately."
             )
-            send_mail(
+            html_msg = f"<p>This is an escalation notice for an unacknowledged expiry risk alert.</p><pre>{alert.message}</pre>"
+            send_resend_email(
+                to=[config.escalation_email],
                 subject=subject,
-                message=escalation_message,
-                from_email=settings.DEFAULT_FROM_EMAIL or 'alerts@marcusstore.com',
-                recipient_list=[config.escalation_email],
-                fail_silently=False
+                html=html_msg,
+                text=escalation_message
             )
-            # Log escalation by appending note to message or log
             alert.message += f"\n[Escalated to {config.escalation_email} at {timezone.now()}]"
             alert.save()
         except Exception as e:
@@ -178,10 +191,13 @@ def check_and_send_expiry_milestone_emails():
     Scans all active stock batches. For any batch that is within one of the milestones
     (7 days, 5 days, 3 days, 1 day before expiry) and has not received
     the email notification for that milestone, dispatches an email notification via Resend
-    and generates an in-app notification.
+    to all registered users and generates an in-app notification.
     """
     config = AlertConfiguration.get_solo()
-    emails = [e.strip() for e in config.recipient_emails.split(',') if e.strip()]
+    config_emails = [e.strip() for e in config.recipient_emails.split(',') if e.strip()]
+    user_emails = list(User.objects.filter(is_active=True).exclude(email='').values_list('email', flat=True))
+    emails = list(set(config_emails + user_emails))
+
 
     # Get active batches that have an expiry date
     batches = StockBatch.objects.filter(
@@ -278,9 +294,10 @@ def check_and_send_expiry_milestone_emails():
                             if response:
                                 emails_sent_count += 1
                         
-                        # 2. Create In-App Notification for Admin/Managers
+                        # 2. Create In-App Notification for all users
                         action_url = reverse('product_detail', args=[batch.product.id])
-                        staff_users = User.objects.filter(role__in=['admin', 'manager'])
+                        staff_users = User.objects.filter(is_active=True)
+
                         for u in staff_users:
                             try:
                                 Notification.objects.create(

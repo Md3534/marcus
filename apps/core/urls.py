@@ -30,9 +30,12 @@ urlpatterns = [
     
     # New batch management & supply chain URLs
     path('batches/', batch_views.batch_management, name='batch_management'),
+    path('batches/add/', batch_views.add_batch, name='add_batch_standalone'),
+    path('products/<uuid:pk>/batches/add/', batch_views.add_batch, name='add_batch'),
     path('batches/<uuid:batch_id>/', batch_views.batch_detail, name='batch_detail'),
     path('batches/<uuid:batch_id>/adjust/', batch_views.adjust_batch_quantity, name='adjust_batch'),
     path('batches/<uuid:batch_id>/mark-expired/', batch_views.mark_batch_expired, name='mark_batch_expired'),
+
     
     # Purchase Orders & Receiving
     path('purchase-orders/', batch_views.purchase_orders_list, name='purchase_orders'),

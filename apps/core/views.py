@@ -23,10 +23,11 @@ from apps.products.ml import run_expiry_predictions_for_all_batches, train_expir
 from apps.notifications.alerts import check_and_generate_alerts
 from apps.notifications.notification_services import dispatch_action_notification_and_email
 
-# Helpers for Role-Based Access Control (RBAC)
-def check_role(user, allowed_roles):
-    """Returns True if the user has one of the allowed roles."""
-    return user.is_authenticated and (user.is_superuser or user.role in allowed_roles)
+# Helpers for Access Control (Role checks bypassed so all registered users can perform all actions)
+def check_role(user, allowed_roles=None):
+    """Returns True for any authenticated user."""
+    return user.is_authenticated
+
 
 def role_forbidden_response(request, message="You do not have permission to perform this action."):
     messages.error(request, message)
@@ -93,14 +94,62 @@ def dashboard(request):
 
 @login_required
 def product_list(request):
+    from datetime import timedelta
     products = Product.objects.all().select_related('category', 'inventory', 'storage_location').order_by('-created_at')
-    categories = Category.objects.all()
-    locations = StorageLocation.objects.all()
+    categories = Category.objects.all().order_by('name')
+    locations = StorageLocation.objects.all().order_by('name')
+    
+    # Filter & Search parameters
+    search_query = request.GET.get('search', '').strip()
+    selected_category = request.GET.get('category', '').strip()
+    selected_location = request.GET.get('location', '').strip()
+    selected_stock_status = request.GET.get('stock_status', '').strip()
+    selected_expiry_status = request.GET.get('expiry_status', '').strip()
+    
+    if search_query:
+        products = products.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(inventory__sku__icontains=search_query) |
+            Q(category__name__icontains=search_query)
+        )
+        
+    if selected_category:
+        products = products.filter(category_id=selected_category)
+        
+    if selected_location:
+        products = products.filter(storage_location_id=selected_location)
+        
+    if selected_stock_status == 'low_stock':
+        products = products.filter(Q(stock__lte=F('inventory__low_stock_threshold')) & Q(stock__gt=0))
+    elif selected_stock_status == 'out_of_stock':
+        products = products.filter(stock=0)
+    elif selected_stock_status == 'in_stock':
+        products = products.filter(stock__gt=0)
+        
+    today = timezone.now().date()
+    if selected_expiry_status == 'expired':
+        products = products.filter(expiry_date__lt=today)
+    elif selected_expiry_status == 'expiring_soon':
+        thirty_days = today + timedelta(days=30)
+        products = products.filter(expiry_date__gte=today, expiry_date__lte=thirty_days)
+    elif selected_expiry_status == 'valid':
+        products = products.filter(Q(expiry_date__gt=today + timedelta(days=30)) | Q(expiry_date__isnull=True))
+
+    has_filters = bool(search_query or selected_category or selected_location or selected_stock_status or selected_expiry_status)
+
     return render(request, 'core/product_list.html', {
         'products': products, 
         'categories': categories, 
-        'locations': locations
+        'locations': locations,
+        'search_query': search_query,
+        'selected_category': selected_category,
+        'selected_location': selected_location,
+        'selected_stock_status': selected_stock_status,
+        'selected_expiry_status': selected_expiry_status,
+        'has_filters': has_filters,
     })
+
 
 
 @login_required
@@ -143,7 +192,7 @@ def product_add(request):
         # Create inventory record with default threshold
         ProductInventory.objects.create(product=product, low_stock_threshold=10)
         
-        # Create StockBatch if stock > 0 or a batch number is entered
+        # Create StockBatch only if stock > 0 or a batch number is explicitly provided
         if stock > 0 or batch_number:
             batch_num = batch_number or f"BATCH-{product.id.hex[:6].upper()}"
             StockBatch.objects.create(
@@ -158,24 +207,81 @@ def product_add(request):
             # Re-update to trigger stock calculations
             product.update_stock_from_batches()
             
-        messages.success(request, f"Product '{name}' added successfully!")
+        # Handle Product Image upload to Cloudinary / storage
+        image_file = request.FILES.get('product_image')
+        image_url = request.POST.get('image_url')
+        if image_file or image_url:
+            handle_product_image_upload(product, image_file=image_file, image_url=image_url)
+
+        messages.success(request, f"Product '{name}' added to catalog successfully!")
         dispatch_action_notification_and_email(
             actor=request.user,
             title=f"New Product Added: {name}",
-            message=f"Product '{name}' was added to inventory with {stock} initial units.",
+            message=f"Product '{name}' was added to catalog.",
             target_obj=product,
             detail_dict={
                 "Product Name": name,
                 "Category": category.name if category else "Uncategorized",
                 "Unit Price": f"₦{unit_price}",
-                "Initial Stock": stock,
+                "Initial Stock": product.stock,
                 "Storage Location": location.name if location else "Unplaced",
-                "Expiry Date": str(expiry_date) if expiry_date else "N/A",
                 "Added By": request.user.get_full_name() or request.user.username or request.user.email
             }
         )
         return redirect('product_list')
     return redirect('product_list')
+
+
+def handle_product_image_upload(product, image_file=None, image_url=None):
+    if not image_file and not image_url:
+        return None
+
+    import os
+    import cloudinary
+    import cloudinary.uploader
+    from apps.notifications.models import AlertConfiguration
+    from apps.products.models import ProductImage
+
+    config_obj = AlertConfiguration.get_solo()
+    creds = config_obj.get_cloudinary_credentials()
+
+    uploaded_url = None
+
+    if creds['is_configured']:
+        try:
+            cloudinary.config(
+                cloud_name=creds['cloud_name'],
+                api_key=creds['api_key'],
+                api_secret=creds['api_secret'],
+                secure=True
+            )
+            if image_file:
+                res = cloudinary.uploader.upload(image_file, folder="products/")
+                uploaded_url = res.get('secure_url') or res.get('url')
+            elif image_url:
+                res = cloudinary.uploader.upload(image_url, folder="products/")
+                uploaded_url = res.get('secure_url') or res.get('url')
+        except Exception as e:
+            print(f"Cloudinary upload exception: {e}")
+
+    # Fallback to local Django storage or direct image_url if Cloudinary wasn't configured or failed:
+    if not uploaded_url:
+        if image_file:
+            ProductImage.objects.filter(product=product, is_primary=True).update(is_primary=False)
+            img_obj = ProductImage.objects.create(product=product, image=image_file, is_primary=True)
+            return img_obj
+        elif image_url:
+            uploaded_url = image_url
+
+    if uploaded_url:
+        ProductImage.objects.filter(product=product, is_primary=True).update(is_primary=False)
+        img_obj = ProductImage.objects.create(
+            product=product,
+            image=uploaded_url,
+            is_primary=True
+        )
+        return img_obj
+    return None
 
 
 @login_required
@@ -205,6 +311,12 @@ def product_edit(request, pk):
             product.category = get_object_or_404(Category, id=category_id)
         
         product.save()
+
+        # Handle Product Image upload / URL
+        image_file = request.FILES.get('product_image')
+        image_url = request.POST.get('image_url')
+        if image_file or image_url:
+            handle_product_image_upload(product, image_file=image_file, image_url=image_url)
         
         # Update the primary batch quantity and details if it exists
         primary_batch = product.batches.first()
@@ -220,6 +332,7 @@ def product_edit(request, pk):
             product.update_stock_from_batches()
             
         messages.success(request, f"Product '{product.name}' updated successfully!")
+
         dispatch_action_notification_and_email(
             actor=request.user,
             title=f"Product Updated: {product.name}",
@@ -243,20 +356,37 @@ def product_delete(request, pk):
         return role_forbidden_response(request, "Permission Denied: Staff and View-Only users cannot delete products.")
         
     product = get_object_or_404(Product, pk=pk)
+    
+    if request.method != 'POST':
+        messages.warning(request, "Product deletion requires POST confirmation.")
+        return redirect('product_detail', pk=pk)
+
     name = product.name
-    product.delete()
-    messages.success(request, f"Product '{name}' was deleted successfully.")
-    dispatch_action_notification_and_email(
-        actor=request.user,
-        title=f"Product Deleted: {name}",
-        message=f"Product '{name}' was deleted from inventory.",
-        target_obj=None,
-        detail_dict={
-            "Product Name": name,
-            "Deleted By": request.user.get_full_name() or request.user.username or request.user.email
-        }
-    )
+    try:
+        product.delete()
+        messages.success(request, f"Product '{name}' and all associated stock batches were deleted successfully.")
+        
+        try:
+            dispatch_action_notification_and_email(
+                actor=request.user,
+                title=f"Product Deleted: {name}",
+                message=f"Product '{name}' was deleted from inventory.",
+                target_obj=None,
+                detail_dict={
+                    "Product Name": name,
+                    "Deleted By": request.user.get_full_name() or request.user.username or request.user.email
+                }
+            )
+        except Exception as notify_err:
+            logger.warning(f"Notification error on product delete: {notify_err}")
+
+    except Exception as e:
+        logger.error(f"Error deleting product '{name}': {e}")
+        messages.error(request, f"Failed to delete product '{name}': {str(e)}")
+        return redirect('product_detail', pk=pk)
+
     return redirect('product_list')
+
 
 
 @login_required
@@ -479,9 +609,11 @@ def settings_page(request):
     config_obj = AlertConfiguration.get_solo()
     from django.conf import settings
     resend_configured = bool(getattr(settings, 'RESEND_API_KEY', None))
+    cloudinary_creds = config_obj.get_cloudinary_credentials()
     return render(request, 'core/settings.html', {
         'config': config_obj,
-        'resend_configured': resend_configured
+        'resend_configured': resend_configured,
+        'cloudinary_creds': cloudinary_creds
     })
 
 
@@ -501,14 +633,21 @@ def settings_update(request):
         config_obj.escalation_email = request.POST.get('escalation_email', '')
         config_obj.sms_provider_url = request.POST.get('sms_provider_url', '')
         config_obj.sms_api_key = request.POST.get('sms_api_key', '')
+        
+        # Cloudinary integration fields
+        config_obj.cloudinary_cloud_name = request.POST.get('cloudinary_cloud_name', '').strip()
+        config_obj.cloudinary_api_key = request.POST.get('cloudinary_api_key', '').strip()
+        config_obj.cloudinary_api_secret = request.POST.get('cloudinary_api_secret', '').strip()
+        
         config_obj.save()
         
         # Trigger retraining when settings change
         try:
             train_expiry_model()
-            messages.success(request, "Alert thresholds updated and AI Model retrained successfully!")
+            messages.success(request, "Alert thresholds & Cloudinary settings updated; AI Model retrained successfully!")
         except Exception as e:
-            messages.success(request, "Alert thresholds updated successfully!")
+            messages.success(request, "Settings updated successfully!")
+
             
     return redirect('settings_page')
 

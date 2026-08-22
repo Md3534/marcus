@@ -10,12 +10,10 @@
           humidity).
         </p>
       </div>
-      {% if user.role != 'view_only' %}
         <button @click="modalOpen = true; modalType = 'custom'; modalTitle = 'Add New Storage Location'; storageFormMode = 'add'; storageLocationData = { id: '', name: '', description: '', temperature: '', humidity: '' }"
                 class="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all shadow-md active:scale-95">
           <i class="fas fa-plus mr-2"></i>Add Location
         </button>
-      {% endif %}
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {% for location in locations %}
@@ -26,27 +24,24 @@
                 <i class="fas fa-warehouse text-xl"></i>
               </div>
               <div class="flex gap-2">
-                {% if user.role != 'view_only' %}
-                  <button @click="modalOpen = true; modalType = 'custom'; modalTitle = 'Edit Storage Location'; storageFormMode = 'edit'; storageLocationData = { id: '{{ location.id }}', name: '{{ location.name|escapejs }}', description: '{{ location.description|default:''|escapejs }}', temperature: '{{ location.temperature|default:'' }}', humidity: '{{ location.humidity|default:'' }}' }"
-                          class="p-2 text-gray-400 hover:text-slate-900 transition-colors"
-                          title="Edit Conditions">
-                    <i class="fas fa-edit"></i>
+                <button @click="modalOpen = true; modalType = 'custom'; modalTitle = 'Edit Storage Location'; storageFormMode = 'edit'; storageLocationData = { id: '{{ location.id }}', name: '{{ location.name|escapejs }}', description: '{{ location.description|default:''|escapejs }}', temperature: '{{ location.temperature|default:'' }}', humidity: '{{ location.humidity|default:'' }}' }"
+                        class="p-2 text-gray-400 hover:text-slate-900 transition-colors"
+                        title="Edit Conditions">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <form action="{% url 'storage_location_delete' location.id %}"
+                      method="POST"
+                      onsubmit=" return confirm( 'Are you sure you want to delete this storage location?', ); ">
+                  {% csrf_token %}
+                  <button type="submit"
+                          class="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                          title="Delete Location">
+                    <i class="fas fa-trash"></i>
                   </button>
-                {% endif %}
-                {% if user.role == 'admin' or user.role == 'manager' %}
-                  <form action="{% url 'storage_location_delete' location.id %}"
-                        method="POST"
-                        onsubmit=" return confirm( 'Are you sure you want to delete this storage location?', ); ">
-                    {% csrf_token %}
-                    <button type="submit"
-                            class="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                            title="Delete Location">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </form>
-                {% endif %}
+                </form>
               </div>
             </div>
+
             <h3 class="text-xl font-bold text-gray-800 mb-1">{{ location.name }}</h3>
             <p class="text-gray-500 text-sm mb-4">{{ location.description|default:"No description provided." }}</p>
             <div class="grid grid-cols-2 gap-3 mb-4">
@@ -79,12 +74,11 @@
             Create storage locations to organize and monitor your stock
             environments.
           </p>
-          {% if user.role != 'view_only' %}
-            <button @click="modalOpen = true; modalType = 'custom'; modalTitle = 'Add New Storage Location'; storageFormMode = 'add'; storageLocationData = { id: '', name: '', description: '', temperature: '', humidity: '' }"
-                    class="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all shadow-md">
-              Add First Location
-            </button>
-          {% endif %}
+          <button @click="modalOpen = true; modalType = 'custom'; modalTitle = 'Add New Storage Location'; storageFormMode = 'add'; storageLocationData = { id: '', name: '', description: '', temperature: '', humidity: '' }"
+                  class="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all shadow-md">
+            Add First Location
+          </button>
+
         </div>
       {% endfor %}
     </div>

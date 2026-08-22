@@ -10,6 +10,14 @@ from django.contrib import messages
 from datetime import timedelta
 
 from apps.products.models import Product, StockBatch, Supplier, PurchaseOrder, GoodsReceipt, InventoryTransaction
+from apps.core.models import Business
+
+def get_default_business():
+    biz = Business.objects.first()
+    if not biz:
+        biz = Business.objects.create(name="M_D Chippa Inventory", subdomain="default")
+    return biz
+
 
 
 @login_required
@@ -42,6 +50,7 @@ def batch_management(request):
             Q(batch_number__icontains=search_query)
         )
     
+    from apps.products.models import StorageLocation
     context = {
         'batches': batches[:100],  # Pagination recommended for production
         'filter_status': filter_status,
@@ -54,8 +63,11 @@ def batch_management(request):
         'expired_count': StockBatch.objects.filter(
             expiry_date__lt=timezone.now().date()
         ).count(),
+        'products': Product.objects.all().order_by('name'),
+        'locations': StorageLocation.objects.all(),
     }
     return render(request, 'core/batch_management.html', context)
+
 
 
 @login_required
@@ -79,14 +91,18 @@ def product_detail_with_batches(request, pk):
         product=product
     ).order_by('-created_at')[:10]
     
+    from apps.products.models import StorageLocation, Category
     context = {
         'product': product,
         'batches': batches,
         'total_value': total_value,
         'expires_in_days': expires_in_days,
         'recent_transactions': recent_transactions,
+        'categories': Category.objects.all(),
+        'locations': StorageLocation.objects.all(),
     }
     return render(request, 'core/product_detail.html', context)
+
 
 
 @login_required
@@ -238,6 +254,7 @@ def adjust_batch_quantity(request, batch_id):
     # Log transaction
     qty_change = new_qty - old_qty
     InventoryTransaction.objects.create(
+        business=get_default_business(),
         product=batch.product,
         batch=batch,
         transaction_type='adjusted',
@@ -284,6 +301,7 @@ def mark_batch_expired(request, batch_id):
     
     # Log as expired transaction
     InventoryTransaction.objects.create(
+        business=get_default_business(),
         product=batch.product,
         batch=batch,
         transaction_type='expired',
@@ -300,3 +318,90 @@ def mark_batch_expired(request, batch_id):
     
     messages.success(request, f"Batch {batch.batch_number} marked as expired")
     return redirect('batch_detail', batch_id=batch_id)
+
+
+@login_required
+def add_batch(request, pk=None):
+    """
+    View to add a new StockBatch for a product.
+    Accepts pk via URL or product_id via POST parameter.
+    """
+    from apps.core.views import check_role, role_forbidden_response
+    if not check_role(request.user, ['admin', 'manager', 'staff']):
+        return role_forbidden_response(request, "Permission Denied: View-Only users cannot add batches.")
+    
+    if request.method == 'POST':
+        p_id = pk or request.POST.get('product_id')
+        product = get_object_or_404(Product, id=p_id)
+        
+        batch_number = (request.POST.get('batch_number') or '').strip()
+        quantity = int(request.POST.get('quantity') or 0)
+        production_date = request.POST.get('production_date') or None
+        expiry_date = request.POST.get('expiry_date') or None
+        storage_location_id = request.POST.get('storage_location') or None
+        
+        if not batch_number:
+            import uuid
+            batch_number = f"BATCH-{uuid.uuid4().hex[:8].upper()}"
+            
+        location = None
+        if storage_location_id:
+            from apps.products.models import StorageLocation
+            location = StorageLocation.objects.filter(id=storage_location_id).first()
+            
+        batch = StockBatch.objects.create(
+            product=product,
+            batch_number=batch_number,
+            quantity=quantity,
+            initial_quantity=quantity,
+            production_date=production_date,
+            expiry_date=expiry_date,
+            storage_location=location
+        )
+        
+        # Log transaction
+        if quantity > 0:
+            InventoryTransaction.objects.create(
+                business=get_default_business(),
+                product=product,
+                batch=batch,
+                transaction_type='received',
+                quantity_change=quantity,
+                reference_id=f"BATCH-{batch.batch_number}",
+                notes=f"Initial stock added for batch #{batch.batch_number}",
+                created_by=str(request.user),
+            )
+
+            
+        # Update product stock and earliest expiry
+        product.update_stock_from_batches()
+        
+        messages.success(request, f"New batch #{batch.batch_number} ({quantity} units) added for '{product.name}'.")
+        
+        try:
+            from apps.notifications.notification_services import dispatch_action_notification_and_email
+            dispatch_action_notification_and_email(
+                actor=request.user,
+                title=f"New Batch Added: #{batch.batch_number}",
+                message=f"Batch #{batch.batch_number} added for '{product.name}' with {quantity} units.",
+                target_obj=batch,
+                detail_dict={
+                    "Product": product.name,
+                    "Batch Number": batch.batch_number,
+                    "Quantity": quantity,
+                    "Production Date": str(production_date) if production_date else "N/A",
+                    "Expiry Date": str(expiry_date) if expiry_date else "N/A",
+                    "Location": location.name if location else "Unplaced",
+                    "Added By": request.user.get_full_name() or request.user.username or request.user.email
+                }
+            )
+        except Exception as e:
+            pass
+            
+        redirect_to = request.POST.get('next')
+        if redirect_to:
+            return redirect(redirect_to)
+        return redirect('product_detail', pk=product.id)
+        
+    return redirect('batch_management')
+

@@ -160,7 +160,6 @@
               </div>
             </td>
             <td class="px-6 py-4 text-right">
-              {% if user.role != 'view_only' %}
               <div class="flex justify-end gap-2">
                 {% if alert.status == 'generated' or alert.status == 'dispatched' %}
                 <a
@@ -178,9 +177,7 @@
                 </a>
                 {% endif %}
               </div>
-              {% else %}
-              <span class="text-xs text-gray-300">View-Only</span>
-              {% endif %}
+
             </td>
           </tr>
           {% empty %}

@@ -33,12 +33,27 @@
 {% endblock extra_css %} {% block content %}
 <div class="max-w-7xl mx-auto">
   <!-- Header -->
-  <div class="mb-6">
-    <h1 class="text-3xl font-bold text-gray-900">Batch Management</h1>
-    <p class="text-gray-600 mt-1">
-      View and manage all product batches with FEFO (First Expired First Out)
-    </p>
+  <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Batch Management</h1>
+      <p class="text-gray-600 mt-1">
+        View and manage all product batches with FEFO (First Expired First Out)
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <form method="POST" action="{% url 'simulate_expiry_alerts' %}" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="bg-amber-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-amber-700 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+          <i class="fas fa-bolt"></i> Simulate Product Expiry
+        </button>
+      </form>
+      <button @click="editingProduct = { id: '', name: '' }; modalOpen = true; modalType = 'add_batch'; modalTitle = 'Add New Stock Batch'" class="bg-slate-900 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+        <i class="fas fa-plus"></i> Add New Batch
+      </button>
+    </div>
+
   </div>
+
   <!-- Status Cards -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
     <div class="bg-white rounded-lg border border-gray-200 p-4">

@@ -38,8 +38,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(
         max_length=15,
         choices=RoleChoices.choices,
-        default=RoleChoices.STAFF,
+        default=RoleChoices.ADMIN,
     )
+
     email = models.EmailField(unique=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

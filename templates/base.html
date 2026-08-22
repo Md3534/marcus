@@ -581,7 +581,9 @@
               <div x-show="modalType === 'add'">{% include 'partials/add_product_form.html' %}</div>
               <div x-show="modalType === 'edit'">{% include 'partials/edit_product_form.html' %}</div>
               <div x-show="modalType === 'add_business'">{% include 'partials/add_business_form.html' %}</div>
+              <div x-show="modalType === 'add_batch'">{% include 'partials/add_batch_form.html' %}</div>
               <div x-show="modalType === 'custom'">
+
                 {% block modal_content %}
                 {% endblock %}
               </div>

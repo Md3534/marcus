@@ -31,18 +31,16 @@ def send_resend_email(to, subject, html, text=None, from_email=None):
     else:
         recipients = [DEFAULT_TO_EMAIL]
 
-    # Resend free tier restrictions:
-    # 1. From must be onboarding@resend.dev
-    # 2. To must be the account owner's email (DEFAULT_TO_EMAIL)
     sender = from_email or DEFAULT_FROM_EMAIL
     
-    # In development/testing/sandbox, we override recipients to DEFAULT_TO_EMAIL if we are using onboarding@resend.dev
-    if sender == DEFAULT_FROM_EMAIL:
-        recipients = [DEFAULT_TO_EMAIL]
+    # Ensure clean, unique recipients list
+    clean_recipients = list(set([r.strip() for r in recipients if r and isinstance(r, str) and r.strip()]))
+    if not clean_recipients:
+        clean_recipients = [DEFAULT_TO_EMAIL]
 
     params = {
         "from": sender,
-        "to": recipients,
+        "to": clean_recipients,
         "subject": subject,
         "html": html,
     }
@@ -51,9 +49,15 @@ def send_resend_email(to, subject, html, text=None, from_email=None):
         params["text"] = text
 
     try:
-        logger.info(f"Sending email via Resend to {recipients} with subject: '{subject}'")
+        logger.info(f"Sending email via Resend to {clean_recipients} with subject: '{subject}'")
         response = resend.Emails.send(params)
         return response
     except Exception as e:
-        logger.error(f"Failed to send email via Resend: {e}")
-        return None
+        logger.warning(f"Resend send failed for recipients {clean_recipients}: {e}. Retrying with fallback recipient {DEFAULT_TO_EMAIL}...")
+        try:
+            params["to"] = [DEFAULT_TO_EMAIL]
+            response = resend.Emails.send(params)
+            return response
+        except Exception as fallback_err:
+            logger.error(f"Failed to send email via Resend fallback: {fallback_err}")
+            return None

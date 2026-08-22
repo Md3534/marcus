@@ -108,7 +108,6 @@
       >
         Expiry Alert Configurations
       </h2>
-      {% if user.role == 'admin' %}
       <form
         action="{% url 'settings_update' %}"
         method="POST"
@@ -243,17 +242,7 @@
           </button>
         </div>
       </form>
-      {% else %}
-      <div
-        class="p-6 bg-red-50 text-red-800 rounded-lg border border-red-100 flex items-center gap-3"
-      >
-        <i class="fas fa-lock text-xl"></i>
-        <p class="text-sm">
-          Only system Administrators can update thresholds, recipient
-          directories, escalation rules, and AI parameters.
-        </p>
-      </div>
-      {% endif %}
+
     </div>
     <!-- API & Integrations Tab -->
     <div
@@ -265,7 +254,6 @@
       >
         API & Integrations Settings
       </h2>
-      {% if user.role == 'admin' %}
       <form
         action="{% url 'settings_update' %}"
         method="POST"
@@ -339,6 +327,75 @@
         <h3
           class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 border-t border-gray-50 pt-6"
         >
+          Cloudinary Image Storage Gateway
+        </h3>
+        <div
+          class="p-5 rounded-lg border mb-6 transition-all duration-300 {% if cloudinary_creds.is_configured %}bg-emerald-50/40 border-emerald-200{% else %}bg-amber-50/40 border-amber-200{% endif %}"
+        >
+          <div class="flex items-start gap-4">
+            <div
+              class="p-3 rounded-lg {% if cloudinary_creds.is_configured %}bg-emerald-100 text-emerald-700{% else %}bg-amber-100 text-amber-700{% endif %}"
+            >
+              <i
+                class="fas {% if cloudinary_creds.is_configured %}fa-cloud-check{% else %}fa-cloud-slash{% endif %} text-xl"
+              ></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-gray-800 text-sm">
+                Cloudinary Storage Status: 
+                {% if cloudinary_creds.is_configured %}
+                  <span class="text-emerald-700 font-bold">Active & Connected</span>
+                {% else %}
+                  <span class="text-amber-700 font-bold">Not Configured (Using Local Storage Fallback)</span>
+                {% endif %}
+              </h4>
+              <p class="text-xs text-gray-500 mt-1">
+                {% if cloudinary_creds.is_configured %}
+                  Product images uploaded will be stored on Cloudinary CDN for instant, high-speed delivery.
+                {% else %}
+                  Enter your Cloudinary API credentials below or set them in <code>.env</code> to send product images directly to Cloudinary cloud storage.
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Cloud Name</label>
+            <input
+              type="text"
+              name="cloudinary_cloud_name"
+              value="{{ config.cloudinary_cloud_name|default:'' }}"
+              placeholder="e.g. my-store-cloud"
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all text-sm"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">API Key</label>
+            <input
+              type="text"
+              name="cloudinary_api_key"
+              value="{{ config.cloudinary_api_key|default:'' }}"
+              placeholder="e.g. 123456789012345"
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all text-sm"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">API Secret</label>
+            <input
+              type="password"
+              name="cloudinary_api_secret"
+              value="{{ config.cloudinary_api_secret|default:'' }}"
+              placeholder="••••••••••••••••"
+              class="w-full bg-gray-50 border border-gray-100 p-3 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all text-sm"
+            />
+          </div>
+        </div>
+
+        <h3
+          class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 border-t border-gray-50 pt-6"
+        >
           Email Delivery Gateway (Resend)
         </h3>
         <div
@@ -367,6 +424,7 @@
             </div>
           </div>
         </div>
+
         <div class="flex justify-end pt-6 border-t border-gray-50 mt-8">
           <button
             type="submit"
@@ -376,17 +434,7 @@
           </button>
         </div>
       </form>
-      {% else %}
-      <div
-        class="p-6 bg-red-50 text-red-800 rounded-lg border border-red-100 flex items-center gap-3"
-      >
-        <i class="fas fa-lock text-xl"></i>
-        <p class="text-sm">
-          Only system Administrators can view or adjust SMS gateways and API
-          credentials.
-        </p>
-      </div>
-      {% endif %}
+
     </div>
     <!-- Alert Simulation Tab -->
     <div
