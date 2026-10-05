@@ -67,18 +67,25 @@
                 <label class="text-sm font-bold text-gray-700">Initial Stock</label>
                 <input type="number" name="stock" min="0" value="0" required 
                        class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all" placeholder="0">
+                <p class="text-[11px] text-gray-400">Units in stock (creates batch if &gt; 0)</p>
             </div>
             <div class="space-y-2">
-                <label class="text-sm font-bold text-gray-700">Storage Location</label>
-                <div class="relative">
-                    <select name="storage_location" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all appearance-none cursor-pointer">
-                        <option value="">Select Location</option>
-                        {% for loc in locations %}
-                            <option value="{{ loc.id }}">{{ loc.name }} (Temp: {{ loc.temperature }}°C)</option>
-                        {% endfor %}
-                    </select>
-                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
-                </div>
+                <label class="text-sm font-bold text-gray-700">Batch Number (Optional)</label>
+                <input type="text" name="batch_number" placeholder="Auto-generated if blank"
+                       class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all">
+                <p class="text-[11px] text-gray-400">e.g. BATCH-2026-001</p>
+            </div>
+        </div>
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Storage Location</label>
+            <div class="relative">
+                <select name="storage_location" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all appearance-none cursor-pointer">
+                    <option value="">Select Location</option>
+                    {% for loc in locations %}
+                        <option value="{{ loc.id }}">{{ loc.name }} (Temp: {{ loc.temperature }}°C)</option>
+                    {% endfor %}
+                </select>
+                <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
             </div>
         </div>
     </div>
