@@ -203,7 +203,7 @@
                     </p>
                 </div>
 
-                <button @click="modalOpen = true; modalType = 'edit'; modalTitle = 'Edit Product'; editingProduct = { id: '{{ product.id }}', name: '{{ product.name|escapejs }}', description: '{{ product.description|default:''|escapejs }}', category: '{{ product.category.id }}', unit_price: {{ product.unit_price }}, stock: {{ product.stock }}, production_date: '{{ product.production_date|date:'Y-m-d' }}', best_before_days: '{{ product.best_before_days|default:'' }}', expiry_date: '{{ product.expiry_date|date:'Y-m-d' }}' }" class="w-full mt-4 px-4 py-3 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors">
+                <button @click="modalOpen = true; modalType = 'edit'; modalTitle = 'Edit Product'; editingProduct = { id: '{{ product.id }}', name: '{{ product.name|escapejs }}', description: '{{ product.description|default:''|escapejs }}', category: '{{ product.category.id }}', unit_price: {{ product.unit_price }}, stock: {{ product.stock }}, production_date: '{{ product.production_date|date:'Y-m-d' }}', best_before_days: '{{ product.best_before_days|default:'' }}', expiry_date: '{{ product.expiry_date|date:'Y-m-d' }}', storage_location: '{{ product.storage_location.id|default:'' }}' }" class="w-full mt-4 px-4 py-3 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors">
                     <i class="fas fa-edit mr-2"></i> Edit Product
                 </button>
             </div>

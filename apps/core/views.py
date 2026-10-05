@@ -12,9 +12,11 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
-from apps.products.models import Product, StockBatch, Category, ProductInventory, StorageLocation
+import uuid
+from apps.products.models import Product, StockBatch, Category, ProductInventory, StorageLocation, InventoryTransaction
 from apps.notifications.models import AlertConfiguration, AlertLog, Notification
 from apps.core.models import Business
+from apps.core.batch_views import get_default_business
 
 from utils.currency import format_naira
 
@@ -86,6 +88,7 @@ def dashboard(request):
         'expiring_soon': expiring_soon,
         'recent_products': recent_products,
         'categories': categories,
+        'locations': StorageLocation.objects.all().order_by('name'),
         'risk_dist': risk_dist,
         'top_at_risk_batches': top_at_risk_batches,
     }
@@ -162,21 +165,45 @@ def product_add(request):
         category_id = request.POST.get('category')
         unit_price = request.POST.get('unit_price')
         description = request.POST.get('description')
-        stock = int(request.POST.get('stock') or 0)
+        
+        stock_raw = request.POST.get('stock')
+        try:
+            stock = max(0, int(stock_raw)) if stock_raw is not None and str(stock_raw).strip() != '' else 0
+        except (ValueError, TypeError):
+            stock = 0
         
         # Expiry related
-        production_date = request.POST.get('production_date') or None
-        best_before_days = request.POST.get('best_before_days') or None
-        expiry_date = request.POST.get('expiry_date') or None
+        from datetime import date
+        prod_date_raw = request.POST.get('production_date', '').strip()
+        production_date = None
+        if prod_date_raw:
+            try:
+                production_date = date.fromisoformat(prod_date_raw)
+            except (ValueError, TypeError):
+                production_date = None
+
+        best_before_days_raw = request.POST.get('best_before_days')
+        try:
+            best_before_days = int(best_before_days_raw) if best_before_days_raw and str(best_before_days_raw).strip().isdigit() else None
+        except (ValueError, TypeError):
+            best_before_days = None
+
+        exp_date_raw = request.POST.get('expiry_date', '').strip()
+        expiry_date = None
+        if exp_date_raw:
+            try:
+                expiry_date = date.fromisoformat(exp_date_raw)
+            except (ValueError, TypeError):
+                expiry_date = None
         
         # Batch and Location
-        batch_number = request.POST.get('batch_number')
+        batch_number = (request.POST.get('batch_number') or '').strip()
         storage_location_id = request.POST.get('storage_location')
         
         category = get_object_or_404(Category, id=category_id)
         location = None
         if storage_location_id:
-            location = get_object_or_404(StorageLocation, id=storage_location_id)
+            location = StorageLocation.objects.filter(id=storage_location_id).first()
         
         product = Product.objects.create(
             name=name,
@@ -190,12 +217,18 @@ def product_add(request):
             storage_location=location
         )
         # Create inventory record with default threshold
-        ProductInventory.objects.create(product=product, low_stock_threshold=10)
+        ProductInventory.objects.get_or_create(
+            product=product,
+            defaults={
+                'low_stock_threshold': 10,
+                'sku': f"SKU-{product.id.hex[:6].upper()}"
+            }
+        )
         
-        # Create StockBatch only if stock > 0 or a batch number is explicitly provided
+        # Create StockBatch if stock > 0 or a batch number is explicitly provided
         if stock > 0 or batch_number:
-            batch_num = batch_number or f"BATCH-{product.id.hex[:6].upper()}"
-            StockBatch.objects.create(
+            batch_num = batch_number or f"BATCH-{uuid.uuid4().hex[:8].upper()}"
+            batch = StockBatch.objects.create(
                 product=product,
                 batch_number=batch_num,
                 quantity=stock,
@@ -206,12 +239,29 @@ def product_add(request):
             )
             # Re-update to trigger stock calculations
             product.update_stock_from_batches()
+
+            if stock > 0:
+                try:
+                    InventoryTransaction.objects.create(
+                        business=get_default_business(),
+                        product=product,
+                        batch=batch,
+                        transaction_type='received',
+                        quantity_change=stock,
+                        reference_id=f"BATCH-{batch.batch_number}",
+                        notes="Initial stock added on product creation",
+                        created_by=str(request.user),
+                    )
+                except Exception:
+                    pass
             
         # Handle Product Image upload to Cloudinary / storage
         image_file = request.FILES.get('product_image')
         image_url = request.POST.get('image_url')
         if image_file or image_url:
             handle_product_image_upload(product, image_file=image_file, image_url=image_url)
+
+        product.refresh_from_db()
 
         messages.success(request, f"Product '{name}' added to catalog successfully!")
         dispatch_action_notification_and_email(
@@ -298,13 +348,34 @@ def product_edit(request, pk):
         product.description = request.POST.get('description')
         
         # Expiry related
-        product.production_date = request.POST.get('production_date') or None
-        product.best_before_days = request.POST.get('best_before_days') or None
-        product.expiry_date = request.POST.get('expiry_date') or None
+        from datetime import date
+        prod_date_raw = request.POST.get('production_date', '').strip()
+        if prod_date_raw:
+            try:
+                product.production_date = date.fromisoformat(prod_date_raw)
+            except (ValueError, TypeError):
+                product.production_date = None
+        else:
+            product.production_date = None
+
+        best_before_days_raw = request.POST.get('best_before_days')
+        try:
+            product.best_before_days = int(best_before_days_raw) if best_before_days_raw and str(best_before_days_raw).strip().isdigit() else None
+        except (ValueError, TypeError):
+            product.best_before_days = None
+
+        exp_date_raw = request.POST.get('expiry_date', '').strip()
+        if exp_date_raw:
+            try:
+                product.expiry_date = date.fromisoformat(exp_date_raw)
+            except (ValueError, TypeError):
+                product.expiry_date = None
+        else:
+            product.expiry_date = None
         
         storage_location_id = request.POST.get('storage_location')
         if storage_location_id:
-            product.storage_location = get_object_or_404(StorageLocation, id=storage_location_id)
+            product.storage_location = StorageLocation.objects.filter(id=storage_location_id).first()
         else:
             product.storage_location = None
             
@@ -319,19 +390,137 @@ def product_edit(request, pk):
         if image_file or image_url:
             handle_product_image_upload(product, image_file=image_file, image_url=image_url)
         
-        # Update the primary batch quantity and details if it exists
-        primary_batch = product.batches.first()
-        if primary_batch:
-            primary_batch.production_date = product.production_date
-            primary_batch.expiry_date = product.expiry_date
-            primary_batch.storage_location = product.storage_location
-            
-            # Read stock value from form
-            new_stock = int(request.POST.get('stock') or 0)
-            primary_batch.quantity = new_stock
-            primary_batch.save()
-            product.update_stock_from_batches()
-            
+        # Ensure inventory record exists
+        ProductInventory.objects.get_or_create(
+            product=product,
+            defaults={
+                'low_stock_threshold': 10,
+                'sku': f"SKU-{product.id.hex[:6].upper()}"
+            }
+        )
+
+        # Handle stock updates across batches
+        stock_raw = request.POST.get('stock')
+        if stock_raw is not None and str(stock_raw).strip() != '':
+            try:
+                new_stock = max(0, int(stock_raw))
+            except (ValueError, TypeError):
+                new_stock = product.stock
+
+            batches = product.batches.all()
+            batch_count = batches.count()
+
+            if batch_count == 0:
+                if new_stock > 0:
+                    batch_num = f"BATCH-{uuid.uuid4().hex[:8].upper()}"
+                    batch = StockBatch.objects.create(
+                        product=product,
+                        batch_number=batch_num,
+                        quantity=new_stock,
+                        initial_quantity=new_stock,
+                        production_date=product.production_date,
+                        expiry_date=product.expiry_date,
+                        storage_location=product.storage_location
+                    )
+                    product.update_stock_from_batches()
+                    try:
+                        InventoryTransaction.objects.create(
+                            business=get_default_business(),
+                            product=product,
+                            batch=batch,
+                            transaction_type='received',
+                            quantity_change=new_stock,
+                            reference_id=f"BATCH-{batch.batch_number}",
+                            notes="Initial stock added via product edit",
+                            created_by=str(request.user),
+                        )
+                    except Exception:
+                        pass
+                else:
+                    Product.objects.filter(id=product.id).update(stock=0)
+            elif batch_count == 1:
+                primary_batch = batches.first()
+                old_qty = primary_batch.quantity
+                qty_diff = new_stock - old_qty
+
+                primary_batch.quantity = new_stock
+                if product.production_date:
+                    primary_batch.production_date = product.production_date
+                if product.expiry_date:
+                    primary_batch.expiry_date = product.expiry_date
+                primary_batch.storage_location = product.storage_location
+                primary_batch.save()
+                product.update_stock_from_batches()
+
+                if qty_diff != 0:
+                    try:
+                        InventoryTransaction.objects.create(
+                            business=get_default_business(),
+                            product=product,
+                            batch=primary_batch,
+                            transaction_type='adjusted',
+                            quantity_change=qty_diff,
+                            reference_id=f"BATCH-{primary_batch.batch_number}",
+                            notes=f"Stock adjusted from {old_qty} to {new_stock} via product edit",
+                            created_by=str(request.user),
+                        )
+                    except Exception:
+                        pass
+            else:
+                # Multiple batches exist
+                current_total = product.stock
+                qty_diff = new_stock - current_total
+
+                if qty_diff > 0:
+                    # User added stock: add diff to the latest batch
+                    latest_batch = batches.order_by('-created_at').first()
+                    latest_batch.quantity += qty_diff
+                    latest_batch.save()
+                    product.update_stock_from_batches()
+
+                    try:
+                        InventoryTransaction.objects.create(
+                            business=get_default_business(),
+                            product=product,
+                            batch=latest_batch,
+                            transaction_type='adjusted',
+                            quantity_change=qty_diff,
+                            reference_id=f"BATCH-{latest_batch.batch_number}",
+                            notes=f"Stock increased by {qty_diff} via product edit",
+                            created_by=str(request.user),
+                        )
+                    except Exception:
+                        pass
+                elif qty_diff < 0:
+                    # User reduced stock: deduct from batches in FEFO order
+                    remaining_to_deduct = abs(qty_diff)
+                    for b in batches.filter(quantity__gt=0).order_by('expiry_date', 'created_at'):
+                        if remaining_to_deduct <= 0:
+                            break
+                        deduct = min(b.quantity, remaining_to_deduct)
+                        b.quantity -= deduct
+                        b.save()
+                        remaining_to_deduct -= deduct
+                    product.update_stock_from_batches()
+
+                    try:
+                        InventoryTransaction.objects.create(
+                            business=get_default_business(),
+                            product=product,
+                            transaction_type='adjusted',
+                            quantity_change=qty_diff,
+                            reference_id=f"ADJ-{product.id.hex[:6].upper()}",
+                            notes=f"Stock decreased by {abs(qty_diff)} via product edit",
+                            created_by=str(request.user),
+                        )
+                    except Exception:
+                        pass
+                else:
+                    # Total stock unchanged, keep batch quantities as is
+                    pass
+
+        product.refresh_from_db()
+
         messages.success(request, f"Product '{product.name}' updated successfully!")
 
         dispatch_action_notification_and_email(

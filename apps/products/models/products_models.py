@@ -93,8 +93,20 @@ class Product(models.Model):
         )
 
     def save(self, *args, **kwargs):
-        from datetime import timedelta
+        from datetime import timedelta, date
         
+        if isinstance(self.production_date, str):
+            try:
+                self.production_date = date.fromisoformat(self.production_date)
+            except (ValueError, TypeError):
+                self.production_date = None
+
+        if isinstance(self.expiry_date, str):
+            try:
+                self.expiry_date = date.fromisoformat(self.expiry_date)
+            except (ValueError, TypeError):
+                self.expiry_date = None
+
         # 1. Inherit default best before days from category if not set
         if not self.best_before_days and self.category and self.category.default_best_before_days:
             self.best_before_days = self.category.default_best_before_days
@@ -226,6 +238,19 @@ class StockBatch(models.Model):
         return False
 
     def save(self, *args, **kwargs):
+        from datetime import date
+        if isinstance(self.production_date, str):
+            try:
+                self.production_date = date.fromisoformat(self.production_date)
+            except (ValueError, TypeError):
+                self.production_date = None
+
+        if isinstance(self.expiry_date, str):
+            try:
+                self.expiry_date = date.fromisoformat(self.expiry_date)
+            except (ValueError, TypeError):
+                self.expiry_date = None
+
         # Do not calculate dynamic expiry. Use standard static calculations if expiry_date is not set.
         if not self.expiry_date and self.production_date:
             base_days = self.product.best_before_days

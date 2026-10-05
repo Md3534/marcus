@@ -55,21 +55,54 @@
     </div>
 
     <div class="space-y-2">
-        <label class="text-sm font-bold text-gray-700">Storage Location</label>
-        <div class="relative">
-            <select name="storage_location" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all appearance-none cursor-pointer">
-                <option value="">Select Storage Location</option>
-                {% for loc in locations %}
-                    <option value="{{ loc.id }}">{{ loc.name }} (Temp: {{ loc.temperature }}°C)</option>
-                {% endfor %}
-            </select>
-            <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+        <label class="text-sm font-bold text-gray-700">Description</label>
+        <textarea name="description" rows="3" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all" placeholder="Enter product details..."></textarea>
+    </div>
+
+    <!-- Stock & Location -->
+    <div class="space-y-4 pt-4 border-t border-gray-50">
+        <h4 class="text-sm font-black text-gray-400 uppercase tracking-widest">Stock & Location</h4>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+                <label class="text-sm font-bold text-gray-700">Initial Stock</label>
+                <input type="number" name="stock" min="0" value="0" required 
+                       class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all" placeholder="0">
+            </div>
+            <div class="space-y-2">
+                <label class="text-sm font-bold text-gray-700">Storage Location</label>
+                <div class="relative">
+                    <select name="storage_location" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all appearance-none cursor-pointer">
+                        <option value="">Select Location</option>
+                        {% for loc in locations %}
+                            <option value="{{ loc.id }}">{{ loc.name }} (Temp: {{ loc.temperature }}°C)</option>
+                        {% endfor %}
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="space-y-2">
-        <label class="text-sm font-bold text-gray-700">Description</label>
-        <textarea name="description" rows="3" class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all" placeholder="Enter product details..."></textarea>
+    <!-- Shelf Life & Expiry -->
+    <div class="space-y-4 pt-4 border-t border-gray-50">
+        <h4 class="text-sm font-black text-gray-400 uppercase tracking-widest">Shelf Life & Expiry</h4>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+                <label class="text-sm font-bold text-gray-700">Production/Arrival Date</label>
+                <input type="date" name="production_date"
+                       class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all">
+            </div>
+            <div class="space-y-2">
+                <label class="text-sm font-bold text-gray-700">Days to Expire</label>
+                <input type="number" name="best_before_days" placeholder="e.g. 365" 
+                       class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all">
+            </div>
+        </div>
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700">Fixed Expiry Date</label>
+            <input type="date" name="expiry_date"
+                   class="w-full p-3 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-slate-800 focus:bg-white outline-none transition-all">
+        </div>
     </div>
 
     <div class="pt-6 border-t border-gray-50">
